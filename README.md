@@ -17,7 +17,7 @@ video.on('error', function(err) {
 });
 video.on('metadata', function(metadata) {
     nframes = metadata.num_frames;
-    format = metadata.format;
+    format = metadata.pixel_format;
     console.log(metadata);
 });
 video.on('start', function() {
