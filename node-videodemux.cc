@@ -14,6 +14,7 @@ VideoDemux::VideoDemux() {
 	baton->frame             = NULL;
 	baton->video_stream_idx  = -1;
 	baton->video_frame_count = 0;
+	baton->frame_buffer = new VideoFrame();
 	baton->finished = false;
 	
 	baton->def_err   = false;
@@ -92,11 +93,6 @@ void VideoDemux::uv_Frame(DemuxBaton *btn, VideoFrame *frm) {
 }
 
 void VideoDemux::m_LoadVideo(std::string fn) {
-	int width, height;
-	int64_t num_frames;
-	double duration, frame_rate;
-	std::string format;
-	
 	int ret = 0;
 	baton->filename = fn;
 	
@@ -111,17 +107,18 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->video_dec_ctx = baton->video_stream->codec;
 	
 	// get video metadata
-	width  = baton->video_dec_ctx->width;
-	height = baton->video_dec_ctx->height;
-	num_frames = baton->video_stream->nb_frames;
-	duration = baton->video_stream->duration * ((double)baton->video_stream->time_base.num/(double)baton->video_stream->time_base.den);
-	frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
+	baton->width  = baton->video_dec_ctx->width;
+	baton->height = baton->video_dec_ctx->height;
+	baton->num_frames = baton->video_stream->nb_frames;
+	baton->duration = (double)baton->fmt_ctx->duration / (double)AV_TIME_BASE;
+	baton->frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
+	baton->frame_time = 1.0 / baton->frame_rate;
 	
-	if      (baton->video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) format = "yuv420p";
-	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   format = "rgb24";
-	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   format = "rgb32";
-	else                                                       format = "unknown";
-	uv_MetaData(baton, width, height, num_frames, frame_rate, duration, format);
+	if      (baton->video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) baton->format = "yuv420p";
+	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
+	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   baton->format = "rgb32";
+	else                                                       baton->format = "unknown";
+	uv_MetaData(baton, baton->width, baton->height, baton->num_frames, baton->frame_rate, baton->duration, baton->format);
 	
 	baton->frame = av_frame_alloc();
 	if (!baton->frame) { uv_Error(baton, "could not allocate frame"); return; }
@@ -129,64 +126,70 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 
 void VideoDemux::m_StartDemuxing() {
 	baton->workReq.data = baton;
-	baton->idleReq.data = baton;
+	baton->timerReq.data = baton;
 	
 	av_init_packet(&baton->pkt);
 	baton->pkt.data = NULL;
 	baton->pkt.size = 0;
 	
+	baton->start = uv_now(uv_default_loop());
+	baton->prev = baton->start;
 	uv_Start(baton);
     
-	uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
-    uv_idle_init(uv_default_loop(), &baton->idleReq);
-    uv_idle_start(&baton->idleReq, uv_IdleDemuxAsync);
+    uv_timer_init(uv_default_loop(), &baton->timerReq);
+    uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 }
 
-void VideoDemux::uv_IdleDemuxAsync(uv_idle_t *req, int status) {
+void VideoDemux::uv_DemuxTimer(uv_timer_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
-	size_t i;
-	size_t len = btn->frame_buffers.size();
-	for(i=0; i<len; i++) {
-		uv_Frame(btn, btn->frame_buffers[i]);
-		delete btn->frame_buffers[i];
-	}
-	btn->frame_buffers.erase(btn->frame_buffers.begin(), btn->frame_buffers.begin() + len);
-	
-	if(btn->finished) {
-		uv_End(btn);
-		uv_idle_stop(&btn->idleReq);
-	}
+	uv_queue_work(uv_default_loop(), &btn->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 }
 
 void VideoDemux::uv_DemuxAsync(uv_work_t *req) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
-	int ret = 0, got_frame;
+	int ret = 0, got_frame = 0;
 	
-	// read frames from the file
-	while (av_read_frame(btn->fmt_ctx, &btn->pkt) >= 0) {
-		AVPacket orig_pkt = btn->pkt;
+	while (true) {
+		// read new packet if empty
+		if (btn->pkt.size <= 0) {
+			if (av_read_frame(btn->fmt_ctx, &btn->pkt) < 0) break;
+			btn->orig_pkt = btn->pkt;
+		}
 		do {
 			ret = uv_DecodePacket(btn, &got_frame, 0);
 			if (ret < 0) break;
 			btn->pkt.data += ret;
 			btn->pkt.size -= ret;
-		} while (btn->pkt.size > 0);
-		av_free_packet(&orig_pkt);
+		} while (btn->pkt.size > 0 && !got_frame);
+		if (btn->pkt.size <= 0) av_free_packet(&btn->orig_pkt);
+		if (got_frame) return;
 	}
+	
 	// flush cached frames
 	btn->pkt.data = NULL;
 	btn->pkt.size = 0;
-	do {
-		uv_DecodePacket(btn, &got_frame, 1);
-	} while (got_frame);
+	uv_DecodePacket(btn, &got_frame, 1);
+	if (!got_frame) btn->finished = true;
 }
 
 void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
-	btn->finished = true;
+	uv_Frame(btn, btn->frame_buffer);
+	
+	if (btn->finished) uv_End(btn);
+	else {
+		uint64_t curr = uv_now(uv_default_loop());
+		
+		uint64_t vidTime = btn->video_frame_count * btn->frame_time * 1000.0;
+		int64_t diff = vidTime - (curr - btn->start);
+		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+		else uv_timer_start(&btn->timerReq, uv_DemuxTimer, diff, 0);
+		
+		btn->prev = curr;
+	}
 }
 
 int VideoDemux::m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx) {
@@ -226,8 +229,12 @@ int VideoDemux::uv_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 			
 			av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(btn->frame->data), btn->frame->linesize, btn->video_dec_ctx->pix_fmt, btn->video_dec_ctx->width, btn->video_dec_ctx->height);
 			
-			VideoFrame *frm = new VideoFrame(video_dst_data[0], ret, btn->video_frame_count);
-			btn->frame_buffers.push_back(frm);
+			uint8_t *old_buf = btn->frame_buffer->getBuffer();
+			if (old_buf) delete[] old_buf;
+			
+			btn->frame_buffer->setBuffer(video_dst_data[0]);
+			btn->frame_buffer->setBufferSize(ret);
+			btn->frame_buffer->setFrameIndex(btn->video_frame_count);
 		}
     }
     return decoded;

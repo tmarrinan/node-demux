@@ -36,6 +36,15 @@ class VideoFrame {
 		uint32_t getFrameIndex() {
 			return frame_idx;
 		}
+		void setBuffer(uint8_t *b) {
+			buf = b;
+		}
+		void setBufferSize(size_t s) {
+			size = s;
+		}
+		void setFrameIndex(uint32_t f) {
+			frame_idx = f;
+		}
 		
 	private:
 		uint8_t *buf;
@@ -45,19 +54,31 @@ class VideoFrame {
 
 struct DemuxBaton {
 	uv_work_t workReq;
-	uv_idle_t idleReq;
+	uv_timer_t timerReq;
 	
 	AVFormatContext *fmt_ctx;
 	AVCodecContext *video_dec_ctx;
 	AVStream *video_stream;
 	AVFrame *frame;
 	AVPacket pkt;
+	AVPacket orig_pkt;
 	int video_stream_idx;
 	uint32_t video_frame_count;
+	
 	std::string filename;
+	int width;
+	int height;
+	int64_t num_frames;
+	double duration;
+	double frame_rate;
+	double frame_time;
+	std::string format;
+	
+	uint64_t start;
+	uint64_t prev;
 	bool finished;
 	
-	std::vector<VideoFrame*> frame_buffers;
+	VideoFrame *frame_buffer;
 	
 	bool def_err;
 	bool def_meta;
@@ -80,7 +101,7 @@ class VideoDemux : public node::ObjectWrap {
 		explicit VideoDemux();
 		~VideoDemux();
 		
-		static void uv_IdleDemuxAsync(uv_idle_t *req, int status);
+		static void uv_DemuxTimer(uv_timer_t *req, int status);
 		static void uv_DemuxAsync(uv_work_t *req);
 		static void uv_DemuxAsyncAfter(uv_work_t *req, int status);
 		static void uv_Error(DemuxBaton *btn, std::string msg);

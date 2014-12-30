@@ -22,11 +22,12 @@ video.on('start', function() {
 video.on('end', function() {
     var time = (Date.now() - start) / 1000;
     console.log("finished demuxing");
-    console.log("  total time: " + time.toFixed(1) + "sec");
-    console.log("  average frames per second: " + (nframes/time).toFixed(1) + "fps");
+    console.log("  total time: " + time.toFixed(3) + "sec");
+    console.log("  average frames per second: " + (nframes/time).toFixed(3) + "fps");
 });
 video.on('frame', function(frameIdx, data) {
-    console.log("received frame " + frameIdx + " (size: " + data.length + ")"); 
+    //console.log("received frame " + frameIdx + " (size: " + data.length + ")");
 });
-video.loadVideo("skyfall_1080p.mp4");
+//video.loadVideo("skyfall_1080p.mp4");
+video.loadVideo("big-buck-bunny_trailer.webm");
 video.startDemuxing();
