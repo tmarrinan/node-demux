@@ -124,6 +124,8 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	
 	baton->frame = av_frame_alloc();
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
+	
+	baton->vid_start = 0;
 }
 
 void VideoDemux::m_StartDemuxing() {
@@ -134,8 +136,7 @@ void VideoDemux::m_StartDemuxing() {
 	baton->pkt.data = NULL;
 	baton->pkt.size = 0;
 	
-	baton->start = uv_now(uv_default_loop());
-	baton->prev = baton->start;
+	baton->dem_start = uv_now(uv_default_loop());
 	m_Start(baton);
     
     uv_timer_init(uv_default_loop(), &baton->timerReq);
@@ -150,6 +151,8 @@ void VideoDemux::m_SeekVideo(int frameIdx) {
 	int64_t seek_time = (baton->video_frame_count * baton->frame_time) / baton->video_time_base;
 	ret = av_seek_frame(baton->fmt_ctx, baton->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
 	if (ret < 0) { m_Error(baton, "could not seek video to specified frame"); return; }
+	
+	baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
 	
 	/*
 	int64_t ts = (int64_t)(baton->video_frame_count * baton->frame_time * 1000.0);
@@ -208,14 +211,11 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 		m_End(btn);
 	}
 	else {
-		uint64_t curr = uv_now(uv_default_loop());
-		
-		uint64_t vidTime = btn->video_frame_count * btn->frame_time * 1000.0;
-		int64_t diff = vidTime - (curr - btn->start);
+		uint64_t dem_curr = uv_now(uv_default_loop());
+		uint64_t vid_curr = btn->video_frame_count * btn->frame_time * 1000.0;
+		int64_t diff = (vid_curr - btn->vid_start) - (dem_curr - btn->dem_start);
 		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 		else uv_timer_start(&btn->timerReq, uv_DemuxTimer, diff, 0);
-		
-		btn->prev = curr;
 	}
 }
 

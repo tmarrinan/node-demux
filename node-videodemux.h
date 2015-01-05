@@ -75,8 +75,8 @@ struct DemuxBaton {
 	double video_time_base;
 	std::string format;
 	
-	uint64_t start;
-	uint64_t prev;
+	uint64_t dem_start;
+	uint64_t vid_start;
 	bool finished;
 	std::string error;
 	
