@@ -1,0 +1,18 @@
+{
+	"name": "node-demux",
+	"version": "0.0.1",
+	"description": "Video Demuxer",
+	"main": "index.js",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/tmarrinan/node-demux.git"
+	},
+	"dependencies": {
+	},
+	"keywords": [
+		"video",
+		"demux"
+	],
+	"author": "Thomas Marrinan",
+	"license": "BSD-3-Clause"
+}
