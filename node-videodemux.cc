@@ -146,6 +146,7 @@ void VideoDemux::m_StartDemuxing() {
 
 void VideoDemux::m_PauseDemuxing() {
 	baton->paused = true;
+	m_End(baton);
 }
 
 void VideoDemux::m_StopDemuxing() {
