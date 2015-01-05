@@ -3,6 +3,15 @@ node-demux
 
 ### Usage ###
 declare new demuxer: `var video = new demux();`
+
+
+| Tables   |      Are      |  Cool |
+|----------|:-------------:|------:|
+| col 1 is |  left-aligned | $1600 |
+| col 2 is |    centered   |   $12 |
+| col 3 is | right-aligned |    $1 |
+
+
 | Method                | Use |
 |-----------------------|-----|
 | video.load(filename)  | loads video from file (`filename` is path to desired file) |
