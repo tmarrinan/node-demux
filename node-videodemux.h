@@ -72,6 +72,7 @@ struct DemuxBaton {
 	double duration;
 	double frame_rate;
 	double frame_time;
+	double video_time_base;
 	std::string format;
 	
 	uint64_t start;
@@ -115,11 +116,13 @@ class VideoDemux : public node::ObjectWrap {
 		static v8::Handle<v8::Value> New(const v8::Arguments& args);
 		static v8::Handle<v8::Value> LoadVideo(const v8::Arguments& args);
 		static v8::Handle<v8::Value> StartDemuxing(const v8::Arguments& args);
+		static v8::Handle<v8::Value> SeekVideo(const v8::Arguments& args);
 		static v8::Handle<v8::Value> On(const v8::Arguments& args);
 		static v8::Persistent<v8::Function> constructor;
 		
 		void m_LoadVideo(std::string fn);
 		void m_StartDemuxing();
+		void m_SeekVideo(int frameIdx);
 		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		void m_On(std::string type, v8::Persistent<v8::Function> callback);
 		

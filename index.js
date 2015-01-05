@@ -11,6 +11,10 @@ function demux() {
 		this.video.StartDemuxing();
 	};
 	
+	this.seekVideo = function(frameIdx) {
+		this.video.SeekVideo(frameIdx);
+	};
+	
 	this.on = function(type, cb) {
 		if (type === "error" || type == "metadata" || type === "start" || type === "end" || type === "frame") {
 			this.video.On(type, cb);

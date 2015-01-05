@@ -114,6 +114,7 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->duration = (double)baton->fmt_ctx->duration / (double)AV_TIME_BASE;
 	baton->frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
 	baton->frame_time = 1.0 / baton->frame_rate;
+	baton->video_time_base = (double)baton->video_stream->time_base.num / (double)baton->video_stream->time_base.den;
 	
 	if      (baton->video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) baton->format = "yuv420p";
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
@@ -139,6 +140,23 @@ void VideoDemux::m_StartDemuxing() {
     
     uv_timer_init(uv_default_loop(), &baton->timerReq);
     uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+}
+
+void VideoDemux::m_SeekVideo(int frameIdx) {
+	int ret;
+	baton->video_frame_count = frameIdx - 1;
+	
+	// not 100% accurate - goes to nearest keyframe
+	int64_t seek_time = (baton->video_frame_count * baton->frame_time) / baton->video_time_base;
+	ret = av_seek_frame(baton->fmt_ctx, baton->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
+	if (ret < 0) { m_Error(baton, "could not seek video to specified frame"); return; }
+	
+	/*
+	int64_t ts = (int64_t)(baton->video_frame_count * baton->frame_time * 1000.0);
+	int64_t seekpos = av_rescale(ts, baton->video_stream->time_base.den, baton->video_stream->time_base.num);
+	seekpos /= 1000;
+	int ret = avformat_seek_file(baton->fmt_ctx, baton->video_stream_idx, 0, seekpos, seekpos, AVSEEK_FLAG_FRAME);
+	*/
 }
 
 void VideoDemux::uv_DemuxTimer(uv_timer_t *req, int status) {
@@ -271,6 +289,7 @@ void VideoDemux::Init(Handle<Object> exports) {
 	// Prototype
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadVideo"), FunctionTemplate::New(LoadVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StartDemuxing"), FunctionTemplate::New(StartDemuxing)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("SeekVideo"), FunctionTemplate::New(SeekVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("On"), FunctionTemplate::New(On)->GetFunction());
 	constructor = Persistent<Function>::New(tpl->GetFunction());
 	exports->Set(String::NewSymbol("VideoDemux"), constructor);
@@ -310,6 +329,20 @@ Handle<Value> VideoDemux::StartDemuxing(const Arguments& args) {
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->m_StartDemuxing();
+	
+	return scope.Close(Undefined());
+}
+
+Handle<Value> VideoDemux::SeekVideo(const Arguments& args) {
+	HandleScope scope;
+	
+	if(args.Length() < 1) {
+		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+		return scope.Close(Undefined());
+	}
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->m_SeekVideo((int)args[0]->ToNumber()->NumberValue());
 	
 	return scope.Close(Undefined());
 }
