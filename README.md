@@ -1,11 +1,16 @@
 node-demux
 ==========
 
+
 ### Install ###
+
 In package.json file, under "dependencies", add:
-"node-demux": "git://github.com/tmarrinan/node-demux"
+
+`"node-demux": "git://github.com/tmarrinan/node-demux"`
+
 
 ### Usage ###
+
 declare new demuxer: `var video = new demux();`
 
 | Method                  | Use |
@@ -19,6 +24,7 @@ declare new demuxer: `var video = new demux();`
 
 
 ### Example ###
+
 ```
 var demux = require('node-demux');
 
