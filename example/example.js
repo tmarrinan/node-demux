@@ -34,6 +34,6 @@ video.on('frame', function(frameIdx, data) {
     	});
     }*/
 });
-video.load("skyfall_1080p.mp4");
-//video.loadVideo("big-buck-bunny_trailer.webm");
-video.play();
+//video.load("skyfall_1080p.mp4");
+video.load("big-buck-bunny_trailer.mp4");
+//video.play();
