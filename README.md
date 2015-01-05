@@ -4,22 +4,14 @@ node-demux
 ### Usage ###
 declare new demuxer: `var video = new demux();`
 
-
-| Tables   |      Are      |  Cool |
-|----------|:-------------:|------:|
-| col 1 is |  left-aligned | $1600 |
-| col 2 is |    centered   |   $12 |
-| col 3 is | right-aligned |    $1 |
-
-
-| Method                | Use |
-|-----------------------|-----|
-| video.load(filename)  | loads video from file (`filename` is path to desired file) |
-| video.play()          | starts demuxing video (callback for `'frame'` on each new decoded frame |
-| video.pause()         | pauses demuxing |
-| video.stop()          | stops demuxing (same as pause, but also seeks video back to start) |
-| video.seek(timestamp) | seeks video to desired time in seconds (not 100% accurate - goes to nearest keyframe) |
-| video.on(message)     | `message` is one of `'error'`, `'metadata'`, `'start'`, `'end'`, or `'frame'` |
+| Method                  | Use |
+|-------------------------|-----|
+| `video.load(filename)`  | loads video from file (`filename` is path to desired file) |
+| `video.play()`          | starts demuxing video (callback for `'frame'` on each new decoded frame |
+| `video.pause()`         | pauses demuxing |
+| `video.stop()`          | stops demuxing (same as pause, but also seeks video back to start) |
+| `video.seek(timestamp)` | seeks video to desired time in seconds (not 100% accurate - goes to nearest keyframe) |
+| `video.on(message)`     | `message` is one of `'error'`, `'metadata'`, `'start'`, `'end'`, or `'frame'` |
 
 
 Example:
