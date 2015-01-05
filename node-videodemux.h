@@ -127,7 +127,7 @@ class VideoDemux : public node::ObjectWrap {
 		void m_StartDemuxing();
 		void m_PauseDemuxing();
 		void m_StopDemuxing();
-		void m_SeekVideo(int frameIdx);
+		void m_SeekVideo(double timestamp);
 		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		void m_On(std::string type, v8::Persistent<v8::Function> callback);
 		

@@ -150,16 +150,16 @@ void VideoDemux::m_PauseDemuxing() {
 
 void VideoDemux::m_StopDemuxing() {
 	baton->paused = true;
-	m_SeekVideo(1);
+	m_SeekVideo(0.0);
 	m_End(baton);
 }
 
-void VideoDemux::m_SeekVideo(int frameIdx) {
+void VideoDemux::m_SeekVideo(double timestamp) {
 	int ret;
-	baton->video_frame_count = frameIdx - 1;
+	baton->video_frame_count = timestamp * baton->frame_rate;
 	
 	// not 100% accurate - goes to nearest keyframe
-	int64_t seek_time = (baton->video_frame_count * baton->frame_time) / baton->video_time_base;
+	int64_t seek_time = timestamp / baton->video_time_base;
 	ret = av_seek_frame(baton->fmt_ctx, baton->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
 	if (ret < 0) { m_Error(baton, "could not seek video to specified frame"); return; }
 	
@@ -369,7 +369,7 @@ Handle<Value> VideoDemux::SeekVideo(const Arguments& args) {
 	}
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_SeekVideo((int)args[0]->ToNumber()->NumberValue());
+	obj->m_SeekVideo(args[0]->ToNumber()->NumberValue());
 	
 	return scope.Close(Undefined());
 }
