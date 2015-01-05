@@ -4,9 +4,7 @@ node-demux
 
 ### Install ###
 
-In package.json file, under "dependencies", add:
-
-`"node-demux": "git://github.com/tmarrinan/node-demux"`
+`npm install node-demux`
 
 
 ### Usage ###
