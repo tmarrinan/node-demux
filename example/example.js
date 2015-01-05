@@ -28,10 +28,7 @@ video.on('end', function() {
 video.on('frame', function(frameIdx, data) {
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
     if(frameIdx === 500) {
-    	video.pause();
-    	setTimeout(function() {
-    		video.play()
-    	}, 2000);
+    	video.seek(800);
     }
     
     /*if(frameIdx >= 300 && frameIdx < 315) {

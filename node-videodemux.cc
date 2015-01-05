@@ -147,7 +147,12 @@ void VideoDemux::m_StartDemuxing() {
 void VideoDemux::m_PauseDemuxing() {
 	baton->paused = true;
 }
-
+/*
+void VideoDemux::m_StopDemuxing() {
+	baton->paused = true;
+	m_SeekVideo(1);
+}
+*/
 void VideoDemux::m_SeekVideo(int frameIdx) {
 	int ret;
 	baton->video_frame_count = frameIdx - 1;
@@ -157,6 +162,7 @@ void VideoDemux::m_SeekVideo(int frameIdx) {
 	ret = av_seek_frame(baton->fmt_ctx, baton->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
 	if (ret < 0) { m_Error(baton, "could not seek video to specified frame"); return; }
 	
+	baton->dem_start = uv_now(uv_default_loop());
 	baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
 	
 	/*
