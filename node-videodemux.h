@@ -77,6 +77,7 @@ struct DemuxBaton {
 	uint64_t start;
 	uint64_t prev;
 	bool finished;
+	std::string error;
 	
 	VideoFrame *frame_buffer;
 	
@@ -104,12 +105,12 @@ class VideoDemux : public node::ObjectWrap {
 		static void uv_DemuxTimer(uv_timer_t *req, int status);
 		static void uv_DemuxAsync(uv_work_t *req);
 		static void uv_DemuxAsyncAfter(uv_work_t *req, int status);
-		static void uv_Error(DemuxBaton *btn, std::string msg);
-		static void uv_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format);
-		static void uv_Start(DemuxBaton *btn);
-		static void uv_End(DemuxBaton *btn);
-		static void uv_Frame(DemuxBaton *btn, VideoFrame *frm);
-		static int uv_DecodePacket(DemuxBaton *btn, int *got_frame, int cached);
+		static void m_Error(DemuxBaton *btn, std::string msg);
+		static void m_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format);
+		static void m_Start(DemuxBaton *btn);
+		static void m_End(DemuxBaton *btn);
+		static void m_Frame(DemuxBaton *btn, VideoFrame *frm);
+		static int m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached);
 		
 		static v8::Handle<v8::Value> New(const v8::Arguments& args);
 		static v8::Handle<v8::Value> LoadVideo(const v8::Arguments& args);

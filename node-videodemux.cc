@@ -16,6 +16,7 @@ VideoDemux::VideoDemux() {
 	baton->video_frame_count = 0;
 	baton->frame_buffer = new VideoFrame();
 	baton->finished = false;
+	baton->error = "";
 	
 	baton->def_err   = false;
 	baton->def_start = false;
@@ -29,7 +30,7 @@ VideoDemux::~VideoDemux() {
 
 }
 
-void VideoDemux::uv_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format) {
+void VideoDemux::m_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format) {
 	if (btn->def_meta) {
 		Local<Object> meta = Object::New();
 		meta->Set(String::NewSymbol("width"),        Number::New(width));
@@ -44,7 +45,7 @@ void VideoDemux::uv_MetaData(DemuxBaton *btn, int width, int height, int64_t num
 	}
 };
 
-void VideoDemux::uv_Error(DemuxBaton *btn, std::string msg) {
+void VideoDemux::m_Error(DemuxBaton *btn, std::string msg) {
 	HandleScope scope;
 	if (btn->def_err) {
 		Local<Value> argv[1] = { Local<Value>::New(String::New(msg.c_str())) };
@@ -53,7 +54,7 @@ void VideoDemux::uv_Error(DemuxBaton *btn, std::string msg) {
 	scope.Close(Undefined());
 }
 
-void VideoDemux::uv_Start(DemuxBaton *btn) {
+void VideoDemux::m_Start(DemuxBaton *btn) {
 	HandleScope scope;
 	if (btn->def_start) {
 		Local<Value> argv[0] = { };
@@ -62,7 +63,7 @@ void VideoDemux::uv_Start(DemuxBaton *btn) {
 	scope.Close(Undefined());
 }
 
-void VideoDemux::uv_End(DemuxBaton *btn) {
+void VideoDemux::m_End(DemuxBaton *btn) {
 	HandleScope scope;
 	if (btn->def_end) {
 		Local<Value> argv[0] = { };
@@ -71,7 +72,7 @@ void VideoDemux::uv_End(DemuxBaton *btn) {
 	scope.Close(Undefined());
 }
 
-void VideoDemux::uv_Frame(DemuxBaton *btn, VideoFrame *frm) {
+void VideoDemux::m_Frame(DemuxBaton *btn, VideoFrame *frm) {
 	HandleScope scope;
 	if (btn->def_frame) {
 		size_t size = frm->getBufferSize();
@@ -98,9 +99,9 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	
 	// open input file, and allocate format context
 	ret = avformat_open_input(&baton->fmt_ctx, baton->filename.c_str(), NULL, NULL);
-	if (ret < 0) { uv_Error(baton, "could not open source file: " + baton->filename); return; }
+	if (ret < 0) { m_Error(baton, "could not open source file: " + baton->filename); return; }
 	ret = avformat_find_stream_info(baton->fmt_ctx, NULL);
-	if (ret < 0) { uv_Error(baton, "could not find stream information"); return; }
+	if (ret < 0) { m_Error(baton, "could not find stream information"); return; }
 	ret = m_OpenCodecContext(&baton->video_stream_idx, baton->fmt_ctx);
 	if (ret < 0) { return; }
 	baton->video_stream = baton->fmt_ctx->streams[baton->video_stream_idx];
@@ -118,10 +119,10 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   baton->format = "rgb32";
 	else                                                       baton->format = "unknown";
-	uv_MetaData(baton, baton->width, baton->height, baton->num_frames, baton->frame_rate, baton->duration, baton->format);
+	m_MetaData(baton, baton->width, baton->height, baton->num_frames, baton->frame_rate, baton->duration, baton->format);
 	
 	baton->frame = av_frame_alloc();
-	if (!baton->frame) { uv_Error(baton, "could not allocate frame"); return; }
+	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
 }
 
 void VideoDemux::m_StartDemuxing() {
@@ -134,7 +135,7 @@ void VideoDemux::m_StartDemuxing() {
 	
 	baton->start = uv_now(uv_default_loop());
 	baton->prev = baton->start;
-	uv_Start(baton);
+	m_Start(baton);
     
     uv_timer_init(uv_default_loop(), &baton->timerReq);
     uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
@@ -158,7 +159,7 @@ void VideoDemux::uv_DemuxAsync(uv_work_t *req) {
 			btn->orig_pkt = btn->pkt;
 		}
 		do {
-			ret = uv_DecodePacket(btn, &got_frame, 0);
+			ret = m_DecodePacket(btn, &got_frame, 0);
 			if (ret < 0) break;
 			btn->pkt.data += ret;
 			btn->pkt.size -= ret;
@@ -170,16 +171,24 @@ void VideoDemux::uv_DemuxAsync(uv_work_t *req) {
 	// flush cached frames
 	btn->pkt.data = NULL;
 	btn->pkt.size = 0;
-	uv_DecodePacket(btn, &got_frame, 1);
+	m_DecodePacket(btn, &got_frame, 1);
 	if (!got_frame) btn->finished = true;
 }
 
 void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
-	uv_Frame(btn, btn->frame_buffer);
+	if (btn->error != "") {
+		m_Error(btn, btn->error);
+		btn->error = "";
+		return;
+	}
 	
-	if (btn->finished) uv_End(btn);
+	m_Frame(btn, btn->frame_buffer);
+	
+	if (btn->finished) {
+		m_End(btn);
+	}
 	else {
 		uint64_t curr = uv_now(uv_default_loop());
 		
@@ -198,34 +207,34 @@ int VideoDemux::m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx) {
     AVCodecContext *cctx = NULL;
     AVCodec *codec = NULL;
     ret = av_find_best_stream(fctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (ret < 0) { uv_Error(baton, "could not find video stream in input file"); return -1; }
+    if (ret < 0) { m_Error(baton, "could not find video stream in input file"); return -1; }
     
 	*stream_idx = ret;
 	st = fctx->streams[*stream_idx];
 	// find decoder for the stream
 	cctx = st->codec;
 	codec = avcodec_find_decoder(cctx->codec_id);
-	if (!codec) { uv_Error(baton, "failed to find codec"); return -1; };
+	if (!codec) { m_Error(baton, "failed to find codec"); return -1; };
 	ret = avcodec_open2(cctx, codec, NULL);
-	if (ret < 0) { uv_Error(baton, "failed to open codec"); return -1; }
+	if (ret < 0) { m_Error(baton, "failed to open codec"); return -1; }
 	
     return 0;
 }
 
-int VideoDemux::uv_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
+int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 	int ret = 0;
     int decoded = btn->pkt.size;
     if (btn->pkt.stream_index == btn->video_stream_idx) {
 		// decode video frame
 		ret = avcodec_decode_video2(btn->video_dec_ctx, btn->frame, got_frame, &btn->pkt);
-		if(ret < 0) { uv_Error(btn, "could not decode video frame"); return -1; }
+		if(ret < 0) { btn->error = "could not decode video frame"; return -1; }
 		if (*got_frame) {
 			btn->video_frame_count++;
 			
 			uint8_t *video_dst_data[4] = { NULL, NULL, NULL, NULL };
 			int video_dst_linesize[4];
 			ret = av_image_alloc(video_dst_data, video_dst_linesize, btn->video_dec_ctx->width, btn->video_dec_ctx->height, btn->video_dec_ctx->pix_fmt, 1);
-			if (ret < 0) { uv_Error(btn, "could not allocate raw video buffer"); return -1; };
+			if (ret < 0) { btn->error = "could not allocate raw video buffer"; return -1; };
 			
 			av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(btn->frame->data), btn->frame->linesize, btn->video_dec_ctx->pix_fmt, btn->video_dec_ctx->width, btn->video_dec_ctx->height);
 			
