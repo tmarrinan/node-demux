@@ -3,15 +3,19 @@ var node_demux = require('./build/Release/node_demux');
 function demux() {
 	this.video = new node_demux.VideoDemux();
 	
-	this.loadVideo = function(filename) {
+	this.load = function(filename) {
 		this.video.LoadVideo(filename);
 	};
 	
-	this.startDemuxing = function() {
+	this.play = function() {
 		this.video.StartDemuxing();
 	};
 	
-	this.seekVideo = function(frameIdx) {
+	this.pause = function() {
+		this.video.PauseDemuxing();
+	};
+	
+	this.seek = function(frameIdx) {
 		this.video.SeekVideo(frameIdx);
 	};
 	
@@ -19,7 +23,7 @@ function demux() {
 		if (type === "error" || type == "metadata" || type === "start" || type === "end" || type === "frame") {
 			this.video.On(type, cb);
 		}
-	}
+	};
 }
 
 module.exports = demux;

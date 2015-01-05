@@ -125,22 +125,27 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->frame = av_frame_alloc();
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
 	
-	baton->vid_start = 0;
+	baton->paused = true;
+	baton->workReq.data = baton;
+	baton->timerReq.data = baton;
+	av_init_packet(&baton->pkt);
+	uv_timer_init(uv_default_loop(), &baton->timerReq);
 }
 
 void VideoDemux::m_StartDemuxing() {
-	baton->workReq.data = baton;
-	baton->timerReq.data = baton;
-	
-	av_init_packet(&baton->pkt);
 	baton->pkt.data = NULL;
 	baton->pkt.size = 0;
-	
+
 	baton->dem_start = uv_now(uv_default_loop());
+	baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
+	baton->paused = false;
 	m_Start(baton);
-    
-    uv_timer_init(uv_default_loop(), &baton->timerReq);
-    uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+	
+	uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+}
+
+void VideoDemux::m_PauseDemuxing() {
+	baton->paused = true;
 }
 
 void VideoDemux::m_SeekVideo(int frameIdx) {
@@ -210,7 +215,7 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	if (btn->finished) {
 		m_End(btn);
 	}
-	else {
+	else if (!btn->paused) {
 		uint64_t dem_curr = uv_now(uv_default_loop());
 		uint64_t vid_curr = btn->video_frame_count * btn->frame_time * 1000.0;
 		int64_t diff = (vid_curr - btn->vid_start) - (dem_curr - btn->dem_start);
@@ -289,6 +294,7 @@ void VideoDemux::Init(Handle<Object> exports) {
 	// Prototype
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadVideo"), FunctionTemplate::New(LoadVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StartDemuxing"), FunctionTemplate::New(StartDemuxing)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("PauseDemuxing"), FunctionTemplate::New(PauseDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SeekVideo"), FunctionTemplate::New(SeekVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("On"), FunctionTemplate::New(On)->GetFunction());
 	constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -329,6 +335,15 @@ Handle<Value> VideoDemux::StartDemuxing(const Arguments& args) {
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->m_StartDemuxing();
+	
+	return scope.Close(Undefined());
+}
+
+Handle<Value> VideoDemux::PauseDemuxing(const Arguments& args) {
+	HandleScope scope;
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->m_PauseDemuxing();
 	
 	return scope.Close(Undefined());
 }

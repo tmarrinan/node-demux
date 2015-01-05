@@ -27,13 +27,20 @@ video.on('end', function() {
 });
 video.on('frame', function(frameIdx, data) {
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
+    if(frameIdx === 500) {
+    	video.pause();
+    	setTimeout(function() {
+    		video.play()
+    	}, 2000);
+    }
+    
     /*if(frameIdx >= 300 && frameIdx < 315) {
     	fs.writeFile("out/aframe_"+frameIdx+"."+format, data, function(err) {
     	
     	});
     }*/
 });
-video.loadVideo("skyfall_1080p.mp4");
+video.load("skyfall_1080p.mp4");
 //video.loadVideo("big-buck-bunny_trailer.webm");
-video.seekVideo(300);
-video.startDemuxing();
+video.seek(300);
+video.play();
