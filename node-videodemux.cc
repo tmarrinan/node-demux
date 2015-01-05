@@ -147,12 +147,13 @@ void VideoDemux::m_StartDemuxing() {
 void VideoDemux::m_PauseDemuxing() {
 	baton->paused = true;
 }
-/*
+
 void VideoDemux::m_StopDemuxing() {
 	baton->paused = true;
 	m_SeekVideo(1);
+	m_End(baton);
 }
-*/
+
 void VideoDemux::m_SeekVideo(int frameIdx) {
 	int ret;
 	baton->video_frame_count = frameIdx - 1;
@@ -162,15 +163,10 @@ void VideoDemux::m_SeekVideo(int frameIdx) {
 	ret = av_seek_frame(baton->fmt_ctx, baton->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
 	if (ret < 0) { m_Error(baton, "could not seek video to specified frame"); return; }
 	
-	baton->dem_start = uv_now(uv_default_loop());
-	baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
-	
-	/*
-	int64_t ts = (int64_t)(baton->video_frame_count * baton->frame_time * 1000.0);
-	int64_t seekpos = av_rescale(ts, baton->video_stream->time_base.den, baton->video_stream->time_base.num);
-	seekpos /= 1000;
-	int ret = avformat_seek_file(baton->fmt_ctx, baton->video_stream_idx, 0, seekpos, seekpos, AVSEEK_FLAG_FRAME);
-	*/
+	if (!baton->paused) {
+		baton->dem_start = uv_now(uv_default_loop());
+		baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
+	}
 }
 
 void VideoDemux::uv_DemuxTimer(uv_timer_t *req, int status) {
@@ -301,6 +297,7 @@ void VideoDemux::Init(Handle<Object> exports) {
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadVideo"), FunctionTemplate::New(LoadVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StartDemuxing"), FunctionTemplate::New(StartDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("PauseDemuxing"), FunctionTemplate::New(PauseDemuxing)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("StopDemuxing"), FunctionTemplate::New(StopDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SeekVideo"), FunctionTemplate::New(SeekVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("On"), FunctionTemplate::New(On)->GetFunction());
 	constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -350,6 +347,15 @@ Handle<Value> VideoDemux::PauseDemuxing(const Arguments& args) {
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->m_PauseDemuxing();
+	
+	return scope.Close(Undefined());
+}
+
+Handle<Value> VideoDemux::StopDemuxing(const Arguments& args) {
+	HandleScope scope;
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->m_StopDemuxing();
 	
 	return scope.Close(Undefined());
 }

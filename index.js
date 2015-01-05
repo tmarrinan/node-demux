@@ -15,6 +15,10 @@ function demux() {
 		this.video.PauseDemuxing();
 	};
 	
+	this.stop = function() {
+		this.video.StopDemuxing();
+	};
+	
 	this.seek = function(frameIdx) {
 		this.video.SeekVideo(frameIdx);
 	};

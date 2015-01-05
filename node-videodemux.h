@@ -118,6 +118,7 @@ class VideoDemux : public node::ObjectWrap {
 		static v8::Handle<v8::Value> LoadVideo(const v8::Arguments& args);
 		static v8::Handle<v8::Value> StartDemuxing(const v8::Arguments& args);
 		static v8::Handle<v8::Value> PauseDemuxing(const v8::Arguments& args);
+		static v8::Handle<v8::Value> StopDemuxing(const v8::Arguments& args);
 		static v8::Handle<v8::Value> SeekVideo(const v8::Arguments& args);
 		static v8::Handle<v8::Value> On(const v8::Arguments& args);
 		static v8::Persistent<v8::Function> constructor;
@@ -125,6 +126,7 @@ class VideoDemux : public node::ObjectWrap {
 		void m_LoadVideo(std::string fn);
 		void m_StartDemuxing();
 		void m_PauseDemuxing();
+		void m_StopDemuxing();
 		void m_SeekVideo(int frameIdx);
 		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		void m_On(std::string type, v8::Persistent<v8::Function> callback);
