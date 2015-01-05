@@ -14,7 +14,7 @@ declare new demuxer: `var video = new demux();`
 | `video.on(message)`     | `message` is one of `'error'`, `'metadata'`, `'start'`, `'end'`, or `'frame'` |
 
 
-Example:
+### Example ###
 ```
 var demux = require('node-demux');
 
