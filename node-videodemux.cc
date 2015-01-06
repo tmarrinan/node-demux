@@ -13,7 +13,6 @@ VideoDemux::VideoDemux() {
 	baton->video_stream      = NULL;
 	baton->frame             = NULL;
 	baton->video_stream_idx  = -1;
-	baton->video_frame_count = 0;
 	baton->frame_buffer = new VideoFrame();
 	baton->finished = false;
 	baton->error = "";
@@ -21,6 +20,7 @@ VideoDemux::VideoDemux() {
 	baton->def_err   = false;
 	baton->def_start = false;
 	baton->def_end   = false;
+	baton->def_seek  = false;
 	baton->def_frame = false;
 	
 	baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
@@ -72,12 +72,21 @@ void VideoDemux::m_End(DemuxBaton *btn) {
 	scope.Close(Undefined());
 }
 
+void VideoDemux::m_Seek(DemuxBaton *btn) {
+	HandleScope scope;
+	if (btn->def_seek) {
+		Local<Value> argv[0] = { };
+		btn->OnSeek->Call(Context::GetCurrent()->Global(), 0, argv);
+	}
+	scope.Close(Undefined());
+}
+
 void VideoDemux::m_Frame(DemuxBaton *btn, VideoFrame *frm) {
 	HandleScope scope;
 	if (btn->def_frame) {
 		size_t size = frm->getBufferSize();
 		uint8_t *buf = frm->getBuffer();
-		uint32_t frameIdx = frm->getFrameIndex();
+		int64_t frameIdx = frm->getFrameIndex();
 		
 		node::Buffer *slowbuf = node::Buffer::New(size);
 		memcpy(node::Buffer::Data(slowbuf), buf, size);
@@ -115,6 +124,7 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
 	baton->frame_time = 1.0 / baton->frame_rate;
 	baton->video_time_base = (double)baton->video_stream->time_base.num / (double)baton->video_stream->time_base.den;
+	if(baton->num_frames == 0) baton->num_frames = (int64_t)floor((baton->duration * baton->frame_rate) + 0.5);
 	
 	if      (baton->video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) baton->format = "yuv420p";
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
@@ -126,7 +136,11 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
 	
 	baton->paused = true;
-	baton->workReq.data = baton;
+	baton->new_frame = false;
+	baton->cue_in_frame = -1;
+	baton->video_frame_number = -1;
+	baton->workDemuxReq.data = baton;
+	baton->workSeekReq.data = baton;
 	baton->timerReq.data = baton;
 	av_init_packet(&baton->pkt);
 	uv_timer_init(uv_default_loop(), &baton->timerReq);
@@ -137,11 +151,11 @@ void VideoDemux::m_StartDemuxing() {
 	baton->pkt.size = 0;
 
 	baton->dem_start = uv_now(uv_default_loop());
-	baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
+	baton->vid_start = baton->video_frame_number * baton->frame_time * 1000.0;
 	baton->paused = false;
 	m_Start(baton);
 	
-	uv_queue_work(uv_default_loop(), &baton->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+	uv_queue_work(uv_default_loop(), &baton->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 }
 
 void VideoDemux::m_PauseDemuxing() {
@@ -156,29 +170,12 @@ void VideoDemux::m_StopDemuxing() {
 }
 
 void VideoDemux::m_SeekVideo(double timestamp) {
-	int ret;
-	baton->video_frame_count = timestamp * baton->frame_rate;
+	baton->seek_timestamp = timestamp;
 	
-	// not 100% accurate - goes to nearest keyframe
-	int64_t seek_time = timestamp / baton->video_time_base;
-	ret = av_seek_frame(baton->fmt_ctx, baton->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
-	if (ret < 0) { m_Error(baton, "could not seek video to specified frame"); return; }
-	
-	if (!baton->paused) {
-		baton->dem_start = uv_now(uv_default_loop());
-		baton->vid_start = baton->video_frame_count * baton->frame_time * 1000.0;
-	}
+	uv_queue_work(uv_default_loop(), &baton->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
 }
 
-void VideoDemux::uv_DemuxTimer(uv_timer_t *req, int status) {
-	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
-	
-	uv_queue_work(uv_default_loop(), &btn->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
-}
-
-void VideoDemux::uv_DemuxAsync(uv_work_t *req) {
-	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
-	
+void VideoDemux::m_DecodeFrame(DemuxBaton *btn) {
 	int ret = 0, got_frame = 0;
 	
 	while (true) {
@@ -204,6 +201,75 @@ void VideoDemux::uv_DemuxAsync(uv_work_t *req) {
 	if (!got_frame) btn->finished = true;
 }
 
+void VideoDemux::uv_DemuxTimer(uv_timer_t *req, int status) {
+	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
+	
+	uv_queue_work(uv_default_loop(), &btn->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+}
+
+void VideoDemux::uv_SeekAsync(uv_work_t *req) {
+	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
+	
+	int ret;
+	int64_t frameNumber = btn->seek_timestamp * btn->frame_rate;
+	if (frameNumber < 0) frameNumber = 0;
+	if (frameNumber > btn->num_frames) frameNumber = btn->num_frames;
+	
+	printf("desired frame: %lld\n", frameNumber);
+	int delta = 8;
+	
+	if (btn->cue_in_frame < 0) m_DecodeFrame(btn);
+	
+	int64_t tmp_frameNumber = frameNumber - delta;
+	if (tmp_frameNumber < 0) tmp_frameNumber = 0;
+	double sec = (double)tmp_frameNumber * btn->frame_time;
+	int64_t time_stamp = btn->video_stream->start_time;
+	time_stamp += (int64_t)(sec / btn->video_time_base + 0.5);
+	ret = av_seek_frame(btn->fmt_ctx, btn->video_stream_idx, time_stamp, AVSEEK_FLAG_BACKWARD);
+	if (ret < 0) { btn->error = "could not seek video to specified frame"; return; }
+	avcodec_flush_buffers(btn->video_dec_ctx);
+	
+	do {
+		m_DecodeFrame(btn);
+		btn->video_frame_number = btn->current_frame - btn->cue_in_frame;
+	} while(btn->video_frame_number < frameNumber);
+	btn->new_frame = true;
+	
+	if (!btn->paused) {
+		btn->dem_start = uv_now(uv_default_loop());
+		btn->vid_start = btn->video_frame_number * btn->frame_time * 1000.0;
+	}
+	
+	/*
+	int ret;
+	btn->video_frame_number = timestamp * btn->frame_rate;
+	
+	// not 100% accurate - goes to nearest keyframe
+	int64_t seek_time = timestamp / btn->video_time_base;
+	ret = av_seek_frame(btn->fmt_ctx, btn->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
+	if (ret < 0) { btn->error = "could not seek video to specified frame"; return; }
+	
+	
+	
+	if (!baton->paused) {
+		baton->dem_start = uv_now(uv_default_loop());
+		baton->vid_start = baton->video_frame_number * baton->frame_time * 1000.0;
+	}
+	*/
+}
+
+void VideoDemux::uv_SeekAsyncAfter(uv_work_t *req, int status) {
+	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
+	
+	m_Seek(btn);
+}
+
+void VideoDemux::uv_DemuxAsync(uv_work_t *req) {
+	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
+	
+	if (!btn->new_frame) m_DecodeFrame(btn);
+}
+
 void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
@@ -214,15 +280,16 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	}
 	
 	m_Frame(btn, btn->frame_buffer);
+	btn->new_frame = false;
 	
 	if (btn->finished) {
 		m_End(btn);
 	}
 	else if (!btn->paused) {
 		uint64_t dem_curr = uv_now(uv_default_loop());
-		uint64_t vid_curr = btn->video_frame_count * btn->frame_time * 1000.0;
+		uint64_t vid_curr = btn->video_frame_number * btn->frame_time * 1000.0;
 		int64_t diff = (vid_curr - btn->vid_start) - (dem_curr - btn->dem_start);
-		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
+		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 		else uv_timer_start(&btn->timerReq, uv_DemuxTimer, diff, 0);
 	}
 }
@@ -255,7 +322,7 @@ int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 		ret = avcodec_decode_video2(btn->video_dec_ctx, btn->frame, got_frame, &btn->pkt);
 		if(ret < 0) { btn->error = "could not decode video frame"; return -1; }
 		if (*got_frame) {
-			btn->video_frame_count++;
+			btn->video_frame_number++;
 			
 			uint8_t *video_dst_data[4] = { NULL, NULL, NULL, NULL };
 			int video_dst_linesize[4];
@@ -269,7 +336,16 @@ int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 			
 			btn->frame_buffer->setBuffer(video_dst_data[0]);
 			btn->frame_buffer->setBufferSize(ret);
-			btn->frame_buffer->setFrameIndex(btn->video_frame_count);
+			btn->frame_buffer->setFrameIndex(btn->video_frame_number);
+			
+			btn->new_frame = true;
+			
+			btn->current_time = (double)(btn->frame->pkt_dts - btn->video_stream->start_time) * btn->video_time_base;
+			btn->current_frame = (int64_t)(btn->frame_rate * btn->current_time + 0.5);
+			if(btn->cue_in_frame < 0) {
+				btn->cue_in_time = (double)(btn->frame->pkt_pts - btn->video_stream->start_time) * btn->video_time_base;
+				btn->cue_in_frame = (int64_t)(btn->frame_rate * btn->cue_in_time + 0.5);
+			}
 		}
     }
     return decoded;
@@ -284,6 +360,8 @@ void VideoDemux::m_On(std::string type, Persistent<Function> callback) {
 		{ baton->def_start = true; baton->OnStart    = callback; }
 	else if (type == "end")
 		{ baton->def_end   = true; baton->OnEnd      = callback; }
+	else if (type == "seek")
+		{ baton->def_seek  = true; baton->OnSeek     = callback; }
 	else if (type == "frame")
 		{ baton->def_frame = true; baton->OnFrame    = callback; }
 }

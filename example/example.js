@@ -25,16 +25,24 @@ video.on('end', function() {
     console.log("  total time: " + time.toFixed(3) + "sec");
     console.log("  average frames per second: " + (nframes/time).toFixed(3) + "fps");
 });
+video.on('seek', function() {
+	video.play();
+});
 video.on('frame', function(frameIdx, data) {
     nframes++;
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
-    /*if(frameIdx >= 300 && frameIdx < 315) {
-    	fs.writeFile("out/aframe_"+frameIdx+"."+format, data, function(err) {
-    	
-    	});
+	
+    /*if(frameIdx === 100 || frameIdx === 200) {
+		fs.writeFile("out/aframe_"+frameIdx+"."+format, data, function(err) {
+			if(err) console.log(err);
+		});
     }*/
+    if(frameIdx === 100) {
+    	video.pause();
+    	video.seek(15.98);
+    }
 });
 //video.load("skyfall_1080p.mp4");
 video.load("big-buck-bunny_trailer.mp4");
-//video.seek(12.3);
+//video.seek(9.8);
 video.play();

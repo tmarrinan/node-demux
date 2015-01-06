@@ -33,7 +33,7 @@ class VideoFrame {
 		size_t getBufferSize() {
 			return size;
 		}
-		uint32_t getFrameIndex() {
+		int64_t getFrameIndex() {
 			return frame_idx;
 		}
 		void setBuffer(uint8_t *b) {
@@ -42,18 +42,19 @@ class VideoFrame {
 		void setBufferSize(size_t s) {
 			size = s;
 		}
-		void setFrameIndex(uint32_t f) {
+		void setFrameIndex(int64_t f) {
 			frame_idx = f;
 		}
 		
 	private:
 		uint8_t *buf;
 		size_t size;
-		uint32_t frame_idx;
+		int64_t frame_idx;
 };
 
 struct DemuxBaton {
-	uv_work_t workReq;
+	uv_work_t workDemuxReq;
+	uv_work_t workSeekReq;
 	uv_timer_t timerReq;
 	
 	AVFormatContext *fmt_ctx;
@@ -63,7 +64,7 @@ struct DemuxBaton {
 	AVPacket pkt;
 	AVPacket orig_pkt;
 	int video_stream_idx;
-	uint32_t video_frame_count;
+	int64_t video_frame_number;
 	
 	std::string filename;
 	int width;
@@ -75,8 +76,15 @@ struct DemuxBaton {
 	double video_time_base;
 	std::string format;
 	
+	double seek_timestamp;
+	double current_time;
+	int64_t current_frame;
+	double cue_in_time;
+	int64_t cue_in_frame;
+	
 	uint64_t dem_start;
 	uint64_t vid_start;
+	bool new_frame;
 	bool finished;
 	bool paused;
 	std::string error;
@@ -87,12 +95,14 @@ struct DemuxBaton {
 	bool def_meta;
 	bool def_start;
 	bool def_end;
+	bool def_seek;
 	bool def_frame;
 	v8::Persistent<v8::Function> NodeBuffer;
 	v8::Persistent<v8::Function> OnError;
 	v8::Persistent<v8::Function> OnMetaData;
 	v8::Persistent<v8::Function> OnStart;
 	v8::Persistent<v8::Function> OnEnd;
+	v8::Persistent<v8::Function> OnSeek;
 	v8::Persistent<v8::Function> OnFrame;
 };
 
@@ -105,14 +115,18 @@ class VideoDemux : public node::ObjectWrap {
 		~VideoDemux();
 		
 		static void uv_DemuxTimer(uv_timer_t *req, int status);
+		static void uv_SeekAsync(uv_work_t *req);
+		static void uv_SeekAsyncAfter(uv_work_t *req, int status);
 		static void uv_DemuxAsync(uv_work_t *req);
 		static void uv_DemuxAsyncAfter(uv_work_t *req, int status);
 		static void m_Error(DemuxBaton *btn, std::string msg);
 		static void m_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format);
 		static void m_Start(DemuxBaton *btn);
 		static void m_End(DemuxBaton *btn);
+		static void m_Seek(DemuxBaton *btn);
 		static void m_Frame(DemuxBaton *btn, VideoFrame *frm);
 		static int m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached);
+		static void m_DecodeFrame(DemuxBaton *btn);
 		
 		static v8::Handle<v8::Value> New(const v8::Arguments& args);
 		static v8::Handle<v8::Value> LoadVideo(const v8::Arguments& args);

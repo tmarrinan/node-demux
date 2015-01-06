@@ -1,5 +1,14 @@
 var node_demux = require('./build/Release/node_demux');
 
+var messages = [
+	"error",
+	"metadata",
+	"start",
+	"end",
+	"seek",
+	"frame"
+];
+
 function demux() {
 	this.video = new node_demux.VideoDemux();
 	
@@ -24,7 +33,7 @@ function demux() {
 	};
 	
 	this.on = function(type, cb) {
-		if (type === "error" || type == "metadata" || type === "start" || type === "end" || type === "frame") {
+		if (messages.indexOf(type) >= 0) {
 			this.video.On(type, cb);
 		}
 	};
