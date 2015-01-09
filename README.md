@@ -1,6 +1,11 @@
 node-demux
 ==========
 
+### Prerequisites ###
+Libav
+* Windows: Download [FFMpeg](http://ffmpeg.zeranoe.com/builds/) (Dev)
+* Mac OS X: `brew install ffmpeg --with-libvpx --with-libvorbis --with-ffplay`
+
 
 ### Install ###
 
