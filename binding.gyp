@@ -27,11 +27,11 @@
 			],
 			['OS=="win"',
 				{
-					'link_settings': {
-						'libraries': [
-				
-						],
-					}
+					'libraries': [
+						"C:\local\dev\lib\libavcodec.dll.a",
+						"C:\local\dev\lib\libavformat.dll.a",
+						"C:\local\dev\lib\libavutil.dll.a"
+					]
 				},
 			],
         ]

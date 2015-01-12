@@ -57,7 +57,7 @@ void VideoDemux::m_Error(DemuxBaton *btn, std::string msg) {
 void VideoDemux::m_Start(DemuxBaton *btn) {
 	HandleScope scope;
 	if (btn->def_start) {
-		Local<Value> argv[0] = { };
+		Local<Value> argv[1];
 		btn->OnStart->Call(Context::GetCurrent()->Global(), 0, argv);
 	}
 	scope.Close(Undefined());
@@ -66,7 +66,7 @@ void VideoDemux::m_Start(DemuxBaton *btn) {
 void VideoDemux::m_End(DemuxBaton *btn) {
 	HandleScope scope;
 	if (btn->def_end) {
-		Local<Value> argv[0] = { };
+		Local<Value> argv[1];
 		btn->OnEnd->Call(Context::GetCurrent()->Global(), 0, argv);
 	}
 	scope.Close(Undefined());
@@ -75,7 +75,7 @@ void VideoDemux::m_End(DemuxBaton *btn) {
 void VideoDemux::m_Seek(DemuxBaton *btn) {
 	HandleScope scope;
 	if (btn->def_seek) {
-		Local<Value> argv[0] = { };
+		Local<Value> argv[1];
 		btn->OnSeek->Call(Context::GetCurrent()->Global(), 0, argv);
 	}
 	scope.Close(Undefined());
@@ -393,7 +393,7 @@ Handle<Value> VideoDemux::New(const Arguments& args) {
 		return args.This();
 	} else {
 		// Invoked as plain function `VideoDemux(...)`, turn into construct call.
-		Local<Value> argv[0] = { };
+		Local<Value> argv[1];
 		return scope.Close(constructor->NewInstance(0, argv));
 	}
 }
