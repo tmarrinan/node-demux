@@ -36,7 +36,7 @@
 						"C:/Dev/ffmpeg-win64-dev/lib/avutil.lib"
 					]
 				},
-			],
+			]
         ]
 	}]
 }

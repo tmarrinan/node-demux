@@ -89,7 +89,7 @@ void VideoDemux::m_Frame(DemuxBaton *btn, VideoFrame *frm) {
 		int64_t frameIdx = frm->getFrameIndex();
 		
 		node::Buffer *slowbuf = node::Buffer::New(size);
-		memcpy(node::Buffer::Data(slowbuf), buf, size);
+		//memcpy(node::Buffer::Data(slowbuf), buf, size);
 		
 		Handle<Value> bufArgs[3] = { slowbuf->handle_, Integer::New(size), Integer::New(0) };
 		Local<Object> buffer = btn->NodeBuffer->NewInstance(3, bufArgs);
@@ -181,7 +181,8 @@ void VideoDemux::m_DecodeFrame(DemuxBaton *btn) {
 	while (true) {
 		// read new packet if empty
 		if (btn->pkt.size <= 0) {
-			if (av_read_frame(btn->fmt_ctx, &btn->pkt) < 0) break;
+            ret = av_read_frame(btn->fmt_ctx, &btn->pkt);
+			if (ret < 0) break;
 			btn->orig_pkt = btn->pkt;
 		}
 		do {
@@ -191,7 +192,7 @@ void VideoDemux::m_DecodeFrame(DemuxBaton *btn) {
 			btn->pkt.size -= ret;
 		} while (btn->pkt.size > 0 && !got_frame);
 		if (btn->pkt.size <= 0) av_free_packet(&btn->orig_pkt);
-		if (got_frame) return;
+        if (got_frame) return;
 	}
 	
 	// flush cached frames
@@ -326,13 +327,13 @@ int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 			
 			uint8_t *video_dst_data[4] = { NULL, NULL, NULL, NULL };
 			int video_dst_linesize[4];
-			ret = av_image_alloc(video_dst_data, video_dst_linesize, btn->video_dec_ctx->width, btn->video_dec_ctx->height, btn->video_dec_ctx->pix_fmt, 1);
-			if (ret < 0) { btn->error = "could not allocate raw video buffer"; return -1; };
+            ret = av_image_alloc(video_dst_data, video_dst_linesize, btn->video_dec_ctx->width, btn->video_dec_ctx->height, btn->video_dec_ctx->pix_fmt, 1);
+            if (ret < 0) { btn->error = "could not allocate raw video buffer"; return -1; };
 			
 			av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(btn->frame->data), btn->frame->linesize, btn->video_dec_ctx->pix_fmt, btn->video_dec_ctx->width, btn->video_dec_ctx->height);
-			
+            
 			uint8_t *old_buf = btn->frame_buffer->getBuffer();
-			if (old_buf) delete[] old_buf;
+            if (old_buf) av_freep(&old_buf);
 			
 			btn->frame_buffer->setBuffer(video_dst_data[0]);
 			btn->frame_buffer->setBufferSize(ret);
