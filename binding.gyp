@@ -27,10 +27,13 @@
 			],
 			['OS=="win"',
 				{
-					'libraries': [
-						"C:\local\dev\lib\libavcodec.dll.a",
-						"C:\local\dev\lib\libavformat.dll.a",
-						"C:\local\dev\lib\libavutil.dll.a"
+					'include_dirs': [
+                        "C:/Dev/ffmpeg-win64-dev/include",
+                    ],
+                    'libraries': [
+						"C:/Dev/ffmpeg-win64-dev/lib/avcodec.lib",
+						"C:/Dev/ffmpeg-win64-dev/lib/avformat.lib",
+						"C:/Dev/ffmpeg-win64-dev/lib/avutil.lib"
 					]
 				},
 			],
