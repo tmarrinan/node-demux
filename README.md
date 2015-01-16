@@ -2,14 +2,24 @@ node-demux
 ==========
 
 ### Prerequisites ###
-Libav
-* Windows: Download [FFMpeg](http://ffmpeg.zeranoe.com/builds/) (Dev)
-* Mac OS X: `brew install ffmpeg --with-libvpx --with-libvorbis --with-ffplay`
+FFMpeg (for developers)
+* Windows
+    * Download [FFMpeg](http://ffmpeg.zeranoe.com/builds/) (Shared and Dev - 64bit)
+    * Use 7-zip to extract downloads
+    * Create folder 'C:\Dev' if it does not already exist
+    * Move extracted FFMpeg Shared folder to 'C:\Dev\ffmpeg-win64-shared'
+    * Move extracted FFMpeg Dev folder to 'C:\Dev\ffmpeg-win64-dev'
+    * Add 'C:\Dev\ffmpeg-win64-shared\bin' to your system `Path` variable
+* Mac OS X
+    * `brew install ffmpeg --with-libvpx --with-libvorbis --with-ffplay`
+* Linux
+    * Install FFMpeg from your package manager (may need at add repository prior to install)
 
 
 ### Install ###
 
-`npm install node-demux`
+* `npm install node-demux`
+    * Note: Windows users may need option to specify compiler `--msvc_version=2013`
 
 
 ### Usage ###
