@@ -89,7 +89,7 @@ void VideoDemux::m_Frame(DemuxBaton *btn, VideoFrame *frm) {
 		int64_t frameIdx = frm->getFrameIndex();
 		
 		node::Buffer *slowbuf = node::Buffer::New(size);
-		//memcpy(node::Buffer::Data(slowbuf), buf, size);
+		memcpy(node::Buffer::Data(slowbuf), buf, size);
 		
 		Handle<Value> bufArgs[3] = { slowbuf->handle_, Integer::New(size), Integer::New(0) };
 		Local<Object> buffer = btn->NodeBuffer->NewInstance(3, bufArgs);
