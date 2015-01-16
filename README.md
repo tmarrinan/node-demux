@@ -33,7 +33,7 @@ declare new demuxer: `var video = new demux();`
 | `video.pause()`         | pauses demuxing |
 | `video.stop()`          | stops demuxing (same as pause, but also seeks video back to start) |
 | `video.seek(timestamp)` | seeks video to desired time in seconds (not 100% accurate - goes to nearest keyframe) |
-| `video.on(message)`     | `message` is one of `'error'`, `'metadata'`, `'start'`, `'end'`, or `'frame'` |
+| `video.on(message)`     | `message` is one of `'error'`, `'metadata'`, `'start'`, `'end'`, `'seek'`, or `'frame'` |
 
 
 ### Example ###
