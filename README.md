@@ -1,7 +1,7 @@
 node-demux
 ==========
 
-Node-Demux is a package that decodes video files into raw frames in real-time. This is useful for creating a video player.
+Node-Demux is a node.js package that decodes video files into raw frames in real-time. This is useful for creating a video player.
 
 
 ### Prerequisites ###
