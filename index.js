@@ -36,9 +36,12 @@ function demux() {
 		}
 		else {
 			var _this = this;
-			setImmediate(function() {
-				_this.seek(timestamp, cb);
-			});
+			setTimeout(function() {
+				//_this.seek(timestamp, cb);
+				if(!_this.video.IsBusy()){
+					_this.video.SeekVideo(timestamp, cb);
+				}
+			}, 16);
 		}
 	};
 	
