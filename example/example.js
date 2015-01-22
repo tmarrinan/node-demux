@@ -25,9 +25,6 @@ video.on('end', function() {
     console.log("  total time: " + time.toFixed(3) + "sec");
     console.log("  average frames per second: " + (nframes/time).toFixed(3) + "fps");
 });
-video.on('seek', function() {
-	video.play();
-});
 video.on('frame', function(frameIdx, data) {
     nframes++;
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
@@ -39,7 +36,16 @@ video.on('frame', function(frameIdx, data) {
 		});
     }
     */
+    
+    if(frameIdx === 300) {
+    	video.stop();
+    	setTimeout(function() {
+    		video.play();
+    	}, 1500);
+    }
 });
 video.load("big-buck-bunny_trailer.mp4");
-//video.seek(9.8);
-video.play();
+video.seek(9.8, function() {
+	console.log("seek complete... ready");
+	video.play();
+});

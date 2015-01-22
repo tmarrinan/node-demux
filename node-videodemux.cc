@@ -20,7 +20,6 @@ VideoDemux::VideoDemux() {
 	baton->def_err   = false;
 	baton->def_start = false;
 	baton->def_end   = false;
-	baton->def_seek  = false;
 	baton->def_frame = false;
 	
 	baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
@@ -74,10 +73,10 @@ void VideoDemux::m_End(DemuxBaton *btn) {
 
 void VideoDemux::m_Seek(DemuxBaton *btn) {
 	HandleScope scope;
-	if (btn->def_seek) {
-		Local<Value> argv[1];
-		btn->OnSeek->Call(Context::GetCurrent()->Global(), 0, argv);
-	}
+	
+	Local<Value> argv[1];
+	btn->seek_callback->Call(Context::GetCurrent()->Global(), 0, argv);
+	
 	scope.Close(Undefined());
 }
 
@@ -163,14 +162,19 @@ void VideoDemux::m_PauseDemuxing() {
 	m_End(baton);
 }
 
-void VideoDemux::m_StopDemuxing() {
+void VideoDemux::m_StopDemuxing(Persistent<Function> callback) {
 	baton->paused = true;
-	m_SeekVideo(0.0);
+	m_SeekVideo(0.0, callback);
+	//m_End(baton);
+}
+
+void VideoDemux:: m_VideoStopped() {
 	m_End(baton);
 }
 
-void VideoDemux::m_SeekVideo(double timestamp) {
+void VideoDemux::m_SeekVideo(double timestamp, Persistent<Function> callback) {
 	baton->seek_timestamp = timestamp;
+	baton->seek_callback = callback;
 	
 	uv_queue_work(uv_default_loop(), &baton->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
 }
@@ -240,23 +244,6 @@ void VideoDemux::uv_SeekAsync(uv_work_t *req) {
 		btn->dem_start = uv_now(uv_default_loop());
 		btn->vid_start = btn->video_frame_number * btn->frame_time * 1000.0;
 	}
-	
-	/*
-	int ret;
-	btn->video_frame_number = timestamp * btn->frame_rate;
-	
-	// not 100% accurate - goes to nearest keyframe
-	int64_t seek_time = timestamp / btn->video_time_base;
-	ret = av_seek_frame(btn->fmt_ctx, btn->video_stream_idx, seek_time, AVSEEK_FLAG_ANY);
-	if (ret < 0) { btn->error = "could not seek video to specified frame"; return; }
-	
-	
-	
-	if (!baton->paused) {
-		baton->dem_start = uv_now(uv_default_loop());
-		baton->vid_start = baton->video_frame_number * baton->frame_time * 1000.0;
-	}
-	*/
 }
 
 void VideoDemux::uv_SeekAsyncAfter(uv_work_t *req, int status) {
@@ -361,8 +348,6 @@ void VideoDemux::m_On(std::string type, Persistent<Function> callback) {
 		{ baton->def_start = true; baton->OnStart    = callback; }
 	else if (type == "end")
 		{ baton->def_end   = true; baton->OnEnd      = callback; }
-	else if (type == "seek")
-		{ baton->def_seek  = true; baton->OnSeek     = callback; }
 	else if (type == "frame")
 		{ baton->def_frame = true; baton->OnFrame    = callback; }
 }
@@ -378,6 +363,7 @@ void VideoDemux::Init(Handle<Object> exports) {
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StartDemuxing"), FunctionTemplate::New(StartDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("PauseDemuxing"), FunctionTemplate::New(PauseDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StopDemuxing"), FunctionTemplate::New(StopDemuxing)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("VideoStopped"), FunctionTemplate::New(VideoStopped)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SeekVideo"), FunctionTemplate::New(SeekVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("On"), FunctionTemplate::New(On)->GetFunction());
 	constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -434,8 +420,19 @@ Handle<Value> VideoDemux::PauseDemuxing(const Arguments& args) {
 Handle<Value> VideoDemux::StopDemuxing(const Arguments& args) {
 	HandleScope scope;
 	
+	Persistent<Function> callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
+	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_StopDemuxing();
+	obj->m_StopDemuxing(callback);
+	
+	return scope.Close(Undefined());
+}
+
+Handle<Value> VideoDemux::VideoStopped(const Arguments& args) {
+	HandleScope scope;
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->m_VideoStopped();
 	
 	return scope.Close(Undefined());
 }
@@ -448,8 +445,11 @@ Handle<Value> VideoDemux::SeekVideo(const Arguments& args) {
 		return scope.Close(Undefined());
 	}
 	
+	double timestamp = args[0]->ToNumber()->NumberValue();
+	Persistent<Function> callback = Persistent<Function>::New(Handle<Function>::Cast(args[1]));
+	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_SeekVideo(args[0]->ToNumber()->NumberValue());
+	obj->m_SeekVideo(timestamp, callback);
 	
 	return scope.Close(Undefined());
 }

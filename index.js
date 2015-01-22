@@ -5,7 +5,6 @@ var messages = [
 	"metadata",
 	"start",
 	"end",
-	"seek",
 	"frame"
 ];
 
@@ -25,11 +24,14 @@ function demux() {
 	};
 	
 	this.stop = function() {
-		this.video.StopDemuxing();
+		var _this = this;
+		this.video.StopDemuxing(function() {
+			_this.video.VideoStopped();
+		});
 	};
 	
-	this.seek = function(timestamp) {
-		this.video.SeekVideo(timestamp);
+	this.seek = function(timestamp, cb) {
+		this.video.SeekVideo(timestamp, cb);
 	};
 	
 	this.on = function(type, cb) {

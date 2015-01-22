@@ -77,6 +77,8 @@ struct DemuxBaton {
 	std::string format;
 	
 	double seek_timestamp;
+	v8::Persistent<v8::Function> seek_callback;
+	
 	double current_time;
 	int64_t current_frame;
 	double cue_in_time;
@@ -95,14 +97,12 @@ struct DemuxBaton {
 	bool def_meta;
 	bool def_start;
 	bool def_end;
-	bool def_seek;
 	bool def_frame;
 	v8::Persistent<v8::Function> NodeBuffer;
 	v8::Persistent<v8::Function> OnError;
 	v8::Persistent<v8::Function> OnMetaData;
 	v8::Persistent<v8::Function> OnStart;
 	v8::Persistent<v8::Function> OnEnd;
-	v8::Persistent<v8::Function> OnSeek;
 	v8::Persistent<v8::Function> OnFrame;
 };
 
@@ -133,6 +133,7 @@ class VideoDemux : public node::ObjectWrap {
 		static v8::Handle<v8::Value> StartDemuxing(const v8::Arguments& args);
 		static v8::Handle<v8::Value> PauseDemuxing(const v8::Arguments& args);
 		static v8::Handle<v8::Value> StopDemuxing(const v8::Arguments& args);
+		static v8::Handle<v8::Value> VideoStopped(const v8::Arguments& args);
 		static v8::Handle<v8::Value> SeekVideo(const v8::Arguments& args);
 		static v8::Handle<v8::Value> On(const v8::Arguments& args);
 		static v8::Persistent<v8::Function> constructor;
@@ -140,8 +141,9 @@ class VideoDemux : public node::ObjectWrap {
 		void m_LoadVideo(std::string fn);
 		void m_StartDemuxing();
 		void m_PauseDemuxing();
-		void m_StopDemuxing();
-		void m_SeekVideo(double timestamp);
+		void m_StopDemuxing(v8::Persistent<v8::Function> callback);
+		void m_VideoStopped();
+		void m_SeekVideo(double timestamp, v8::Persistent<v8::Function> callback);
 		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		void m_On(std::string type, v8::Persistent<v8::Function> callback);
 		
