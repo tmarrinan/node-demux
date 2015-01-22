@@ -39,19 +39,19 @@ video.on('frame', function(frameIdx, data) {
 });
 video.load("big-buck-bunny_trailer.mp4");
 video.seek(9.8, function() {
-	console.log("seek complete");
+	console.log("seek 1 complete");
 	video.play();
 });
 video.seek(1.2, function() {
-	console.log("seek complete");
+	console.log("seek 2 complete");
 	video.play();
 });
 video.seek(4.7, function() {
-	console.log("seek complete");
+	console.log("seek 3 complete");
 	video.play();
 });
 video.seek(12.1, function() {
-	console.log("seek complete");
+	console.log("seek 4 complete");
 	video.play();
 });
 

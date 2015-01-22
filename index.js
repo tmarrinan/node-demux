@@ -37,10 +37,7 @@ function demux() {
 		else {
 			var _this = this;
 			setTimeout(function() {
-				//_this.seek(timestamp, cb);
-				if(!_this.video.IsBusy()){
-					_this.video.SeekVideo(timestamp, cb);
-				}
+				_this.seek(timestamp, cb);
 			}, 16);
 		}
 	};

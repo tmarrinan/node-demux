@@ -136,6 +136,9 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	
 	baton->frame = av_frame_alloc();
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
+    
+    baton->pkt.data = NULL;
+	baton->pkt.size = 0;
 	
 	baton->paused = true;
 	baton->new_frame = false;
@@ -149,9 +152,6 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 }
 
 void VideoDemux::m_StartDemuxing() {
-	baton->pkt.data = NULL;
-	baton->pkt.size = 0;
-
 	baton->dem_start = uv_now(uv_default_loop());
 	baton->vid_start = baton->video_frame_number * baton->frame_time * 1000.0;
 	baton->paused = false;
@@ -227,11 +227,11 @@ void VideoDemux::uv_SeekAsync(uv_work_t *req) {
 	if (frameNumber < 0) frameNumber = 0;
 	if (frameNumber > btn->num_frames) frameNumber = btn->num_frames;
 	
-	printf("desired frame: %lld\n", frameNumber);
+	//printf("desired frame: %lld\n", frameNumber);
 	int delta = 8;
 	
 	if (btn->cue_in_frame < 0) m_DecodeFrame(btn);
-	
+    
 	int64_t tmp_frameNumber = frameNumber - delta;
 	if (tmp_frameNumber < 0) tmp_frameNumber = 0;
 	double sec = (double)tmp_frameNumber * btn->frame_time;
