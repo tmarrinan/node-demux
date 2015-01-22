@@ -42,4 +42,17 @@ video.seek(9.8, function() {
 	console.log("seek complete");
 	video.play();
 });
+video.seek(1.2, function() {
+	console.log("seek complete");
+	video.play();
+});
+video.seek(4.7, function() {
+	console.log("seek complete");
+	video.play();
+});
+video.seek(12.1, function() {
+	console.log("seek complete");
+	video.play();
+});
+
 

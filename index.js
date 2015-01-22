@@ -36,9 +36,9 @@ function demux() {
 		}
 		else {
 			var _this = this;
-			setTimeout(function() {
+			setImmediate(function() {
 				_this.seek(timestamp, cb);
-			}, 16);
+			});
 		}
 	};
 	
