@@ -36,16 +36,10 @@ video.on('frame', function(frameIdx, data) {
 		});
     }
     */
-    
-    if(frameIdx === 300) {
-    	video.stop();
-    	setTimeout(function() {
-    		video.play();
-    	}, 1500);
-    }
 });
 video.load("big-buck-bunny_trailer.mp4");
 video.seek(9.8, function() {
-	console.log("seek complete... ready");
+	console.log("seek complete");
 	video.play();
 });
+

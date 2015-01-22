@@ -22,6 +22,9 @@ VideoDemux::VideoDemux() {
 	baton->def_end   = false;
 	baton->def_frame = false;
 	
+	baton->busy = false;
+	baton->seek_when_ready = false;
+	
 	baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
 }
 
@@ -158,6 +161,8 @@ void VideoDemux::m_StartDemuxing() {
 }
 
 void VideoDemux::m_PauseDemuxing() {
+	baton->busy = true;
+	
 	baton->paused = true;
 	m_End(baton);
 }
@@ -165,7 +170,6 @@ void VideoDemux::m_PauseDemuxing() {
 void VideoDemux::m_StopDemuxing(Persistent<Function> callback) {
 	baton->paused = true;
 	m_SeekVideo(0.0, callback);
-	//m_End(baton);
 }
 
 void VideoDemux:: m_VideoStopped() {
@@ -173,10 +177,13 @@ void VideoDemux:: m_VideoStopped() {
 }
 
 void VideoDemux::m_SeekVideo(double timestamp, Persistent<Function> callback) {
+	baton->busy = true;
+	
 	baton->seek_timestamp = timestamp;
 	baton->seek_callback = callback;
 	
-	uv_queue_work(uv_default_loop(), &baton->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
+	if(baton->paused) uv_queue_work(uv_default_loop(), &baton->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
+	else { baton->paused = true; baton->seek_when_ready = true; }
 }
 
 void VideoDemux::m_DecodeFrame(DemuxBaton *btn) {
@@ -249,6 +256,7 @@ void VideoDemux::uv_SeekAsync(uv_work_t *req) {
 void VideoDemux::uv_SeekAsyncAfter(uv_work_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
+	btn->busy = false;
 	m_Seek(btn);
 }
 
@@ -279,6 +287,14 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 		int64_t diff = (vid_curr - btn->vid_start) - (dem_curr - btn->dem_start);
 		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 		else uv_timer_start(&btn->timerReq, uv_DemuxTimer, diff, 0);
+	}
+	
+	if(btn->paused) {
+		if(btn->seek_when_ready) {
+			uv_queue_work(uv_default_loop(), &btn->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
+			btn->seek_when_ready = false;
+		}
+		else btn->busy = false;
 	}
 }
 
@@ -366,6 +382,7 @@ void VideoDemux::Init(Handle<Object> exports) {
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("VideoStopped"), FunctionTemplate::New(VideoStopped)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SeekVideo"), FunctionTemplate::New(SeekVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("On"), FunctionTemplate::New(On)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("IsBusy"), FunctionTemplate::New(IsBusy)->GetFunction());
 	constructor = Persistent<Function>::New(tpl->GetFunction());
 	exports->Set(String::NewSymbol("VideoDemux"), constructor);
 }
@@ -440,7 +457,7 @@ Handle<Value> VideoDemux::VideoStopped(const Arguments& args) {
 Handle<Value> VideoDemux::SeekVideo(const Arguments& args) {
 	HandleScope scope;
 	
-	if(args.Length() < 1) {
+	if(args.Length() < 2) {
 		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
 		return scope.Close(Undefined());
 	}
@@ -469,5 +486,13 @@ Handle<Value> VideoDemux::On(const Arguments& args) {
 	obj->m_On(type, callback);
 	
 	return scope.Close(Undefined());
+}
+
+Handle<Value> VideoDemux::IsBusy(const Arguments& args) {
+	HandleScope scope;
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	
+	return scope.Close(Boolean::New(obj->baton->busy));
 }
 	

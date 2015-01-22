@@ -31,7 +31,15 @@ function demux() {
 	};
 	
 	this.seek = function(timestamp, cb) {
-		this.video.SeekVideo(timestamp, cb);
+		if(!this.video.IsBusy()){
+			this.video.SeekVideo(timestamp, cb);
+		}
+		else {
+			var _this = this;
+			setTimeout(function() {
+				_this.seek(timestamp, cb);
+			}, 16);
+		}
 	};
 	
 	this.on = function(type, cb) {
