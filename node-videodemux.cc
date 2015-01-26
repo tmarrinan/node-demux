@@ -170,11 +170,16 @@ void VideoDemux::m_StartDemuxing() {
 }
 
 void VideoDemux::m_PauseDemuxing(Persistent<Function> callback) {
+	if(baton->paused) {
+		baton->callback = callback;
+		m_Pause(baton);
+		return;
+	}
+	
 	baton->busy = true;
 	
 	baton->paused = true;
 	baton->callback = callback;
-	//m_End(baton);
 }
 
 void VideoDemux::m_StopDemuxing(Persistent<Function> callback) {
@@ -186,6 +191,7 @@ void VideoDemux::m_SeekVideo(double timestamp, Persistent<Function> callback) {
 	
 	baton->seek_timestamp = timestamp;
 	baton->callback = callback;
+	baton->finished = false;
 	
 	if(baton->paused) uv_queue_work(uv_default_loop(), &baton->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
 	else { baton->paused = true; baton->seek_when_ready = true; }
@@ -276,7 +282,19 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	m_Frame(btn, btn->frame_buffer);
 	btn->new_frame = false;
 	
+	if(btn->paused) {
+		if(btn->seek_when_ready) {
+			uv_queue_work(uv_default_loop(), &btn->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
+			btn->seek_when_ready = false;
+		}
+		else {
+			btn->busy = false;
+			m_Pause(btn);
+		}
+	}
+	
 	if (btn->finished) {
+		btn->paused = true;
 		m_End(btn);
 	}
 	else if (!btn->paused) {
@@ -285,17 +303,6 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 		int64_t diff = (vid_curr - btn->vid_start) - (dem_curr - btn->dem_start);
 		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 		else uv_timer_start(&btn->timerReq, uv_DemuxTimer, diff, 0);
-	}
-	
-	if(btn->paused) {
-		if(btn->seek_when_ready) {
-			uv_queue_work(uv_default_loop(), &btn->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
-			btn->seek_when_ready = false;
-		}
-		else {
-			m_Pause(btn);
-			btn->busy = false;
-		}
 	}
 }
 
@@ -329,8 +336,14 @@ int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 		if (*got_frame) {
 			btn->new_frame = true;
 			
-			btn->current_time = (double)(btn->frame->pkt_dts - btn->video_stream->start_time) * btn->video_time_base;
-			btn->current_frame = (int64_t)(btn->frame_rate * btn->current_time + 0.5);
+			if (btn->frame->pkt_dts >= 0) {
+				btn->current_time = (double)(btn->frame->pkt_dts - btn->video_stream->start_time) * btn->video_time_base;
+				btn->current_frame = (int64_t)(btn->frame_rate * btn->current_time + 0.5);
+			}
+			else {
+				btn->current_frame++;
+				btn->current_time = (double)btn->current_frame / btn->frame_rate;
+			}
 			
 			uint8_t *video_dst_data[4] = { NULL, NULL, NULL, NULL };
 			int video_dst_linesize[4];
