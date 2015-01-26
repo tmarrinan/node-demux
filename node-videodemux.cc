@@ -32,15 +32,16 @@ VideoDemux::~VideoDemux() {
 
 }
 
-void VideoDemux::m_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format) {
+void VideoDemux::m_MetaData(DemuxBaton *btn, int width, int height, double display_aspect_ratio, int64_t num_frames, double frame_rate, double duration, std::string format) {
 	if (btn->def_meta) {
 		Local<Object> meta = Object::New();
-		meta->Set(String::NewSymbol("width"),        Number::New(width));
-		meta->Set(String::NewSymbol("height"),       Number::New(height));
-		meta->Set(String::NewSymbol("num_frames"),   Number::New(num_frames));
-		meta->Set(String::NewSymbol("frame_rate"),   Number::New(frame_rate));
-		meta->Set(String::NewSymbol("duration"),     Number::New(duration));
-		meta->Set(String::NewSymbol("pixel_format"), String::New(format.c_str()));
+		meta->Set(String::NewSymbol("width"),                Number::New(width));
+		meta->Set(String::NewSymbol("height"),               Number::New(height));
+		meta->Set(String::NewSymbol("display_aspect_ratio"), Number::New(display_aspect_ratio));
+		meta->Set(String::NewSymbol("num_frames"),           Number::New(num_frames));
+		meta->Set(String::NewSymbol("frame_rate"),           Number::New(frame_rate));
+		meta->Set(String::NewSymbol("duration"),             Number::New(duration));
+		meta->Set(String::NewSymbol("pixel_format"),         String::New(format.c_str()));
 		Local<Value> argv[1];
 		argv[0] = Local<Value>::New(meta);
 		btn->OnMetaData->Call(Context::GetCurrent()->Global(), 1, argv);
@@ -130,6 +131,7 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	// get video metadata
 	baton->width  = baton->video_dec_ctx->width;
 	baton->height = baton->video_dec_ctx->height;
+	baton->display_aspect_ratio = (double)(baton->width * baton->video_dec_ctx->sample_aspect_ratio.num) / (double)(baton->height * baton->video_dec_ctx->sample_aspect_ratio.den);
 	baton->num_frames = baton->video_stream->nb_frames;
 	baton->duration = (double)baton->fmt_ctx->duration / (double)AV_TIME_BASE;
 	baton->frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
@@ -141,7 +143,7 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   baton->format = "rgb32";
 	else                                                       baton->format = "unknown";
-	m_MetaData(baton, baton->width, baton->height, baton->num_frames, baton->frame_rate, baton->duration, baton->format);
+	m_MetaData(baton, baton->width, baton->height, baton->display_aspect_ratio, baton->num_frames, baton->frame_rate, baton->duration, baton->format);
 	
 	baton->frame = av_frame_alloc();
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }

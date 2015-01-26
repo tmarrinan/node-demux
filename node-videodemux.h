@@ -70,6 +70,7 @@ struct DemuxBaton {
 	int width;
 	int height;
 	int64_t num_frames;
+	double display_aspect_ratio;
 	double duration;
 	double frame_rate;
 	double frame_time;
@@ -122,7 +123,7 @@ class VideoDemux : public node::ObjectWrap {
 		static void uv_DemuxAsync(uv_work_t *req);
 		static void uv_DemuxAsyncAfter(uv_work_t *req, int status);
 		static void m_Error(DemuxBaton *btn, std::string msg);
-		static void m_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format);
+		static void m_MetaData(DemuxBaton *btn, int width, int height, double display_aspect_ratio, int64_t num_frames, double frame_rate, double duration, std::string format);
 		static void m_Start(DemuxBaton *btn);
 		static void m_End(DemuxBaton *btn);
 		static void m_Pause(DemuxBaton *btn);
