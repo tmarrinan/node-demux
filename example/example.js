@@ -29,29 +29,15 @@ video.on('frame', function(frameIdx, data) {
     nframes++;
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
 	
-	/*
-    if(frameIdx === 500) {
-		fs.writeFile("out/aframe_"+frameIdx+"."+format, data, function(err) {
-			if(err) console.log(err);
+    if(frameIdx === 300) {
+    	video.stop(function() {
+			console.log("video stopped");
 		});
     }
-    */
 });
 video.load("big-buck-bunny_trailer.mp4");
 video.seek(9.8, function() {
-	console.log("seek 1 complete");
-	video.play();
-});
-video.seek(1.2, function() {
-	console.log("seek 2 complete");
-	video.play();
-});
-video.seek(4.7, function() {
-	console.log("seek 3 complete");
-	video.play();
-});
-video.seek(12.1, function() {
-	console.log("seek 4 complete");
+	console.log("seek complete");
 	video.play();
 });
 

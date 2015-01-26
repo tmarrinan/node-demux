@@ -78,9 +78,8 @@ struct DemuxBaton {
 	
 	bool busy;
 	bool seek_when_ready;
-	
 	double seek_timestamp;
-	v8::Persistent<v8::Function> seek_callback;
+	v8::Persistent<v8::Function> callback;
 	
 	double current_time;
 	int64_t current_frame;
@@ -126,6 +125,7 @@ class VideoDemux : public node::ObjectWrap {
 		static void m_MetaData(DemuxBaton *btn, int width, int height, int64_t num_frames, double frame_rate, double duration, std::string format);
 		static void m_Start(DemuxBaton *btn);
 		static void m_End(DemuxBaton *btn);
+		static void m_Pause(DemuxBaton *btn);
 		static void m_Seek(DemuxBaton *btn);
 		static void m_Frame(DemuxBaton *btn, VideoFrame *frm);
 		static int m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached);
@@ -136,7 +136,6 @@ class VideoDemux : public node::ObjectWrap {
 		static v8::Handle<v8::Value> StartDemuxing(const v8::Arguments& args);
 		static v8::Handle<v8::Value> PauseDemuxing(const v8::Arguments& args);
 		static v8::Handle<v8::Value> StopDemuxing(const v8::Arguments& args);
-		static v8::Handle<v8::Value> VideoStopped(const v8::Arguments& args);
 		static v8::Handle<v8::Value> SeekVideo(const v8::Arguments& args);
 		static v8::Handle<v8::Value> On(const v8::Arguments& args);
 		static v8::Handle<v8::Value> IsBusy(const v8::Arguments& args);
@@ -144,9 +143,8 @@ class VideoDemux : public node::ObjectWrap {
 		
 		void m_LoadVideo(std::string fn);
 		void m_StartDemuxing();
-		void m_PauseDemuxing();
+		void m_PauseDemuxing(v8::Persistent<v8::Function> callback);
 		void m_StopDemuxing(v8::Persistent<v8::Function> callback);
-		void m_VideoStopped();
 		void m_SeekVideo(double timestamp, v8::Persistent<v8::Function> callback);
 		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		void m_On(std::string type, v8::Persistent<v8::Function> callback);

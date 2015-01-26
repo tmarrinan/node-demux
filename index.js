@@ -19,15 +19,28 @@ function demux() {
 		this.video.StartDemuxing();
 	};
 	
-	this.pause = function() {
-		this.video.PauseDemuxing();
+	this.pause = function(cb) {
+		if(!this.video.IsBusy()){
+			this.video.PauseDemuxing(cb);
+		}
+		else {
+			var _this = this;
+			setTimeout(function() {
+				_this.pause(cb);
+			}, 16);
+		}
 	};
 	
-	this.stop = function() {
-		var _this = this;
-		this.video.StopDemuxing(function() {
-			_this.video.VideoStopped();
-		});
+	this.stop = function(cb) {
+		if(!this.video.IsBusy()){
+			this.video.StopDemuxing(cb);
+		}
+		else {
+			var _this = this;
+			setTimeout(function() {
+				_this.stop(cb);
+			}, 16);
+		}
 	};
 	
 	this.seek = function(timestamp, cb) {

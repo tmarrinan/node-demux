@@ -74,11 +74,20 @@ void VideoDemux::m_End(DemuxBaton *btn) {
 	scope.Close(Undefined());
 }
 
+void VideoDemux::m_Pause(DemuxBaton *btn) {
+	HandleScope scope;
+	
+	Local<Value> argv[1];
+	btn->callback->Call(Context::GetCurrent()->Global(), 0, argv);
+	
+	scope.Close(Undefined());
+}
+
 void VideoDemux::m_Seek(DemuxBaton *btn) {
 	HandleScope scope;
 	
 	Local<Value> argv[1];
-	btn->seek_callback->Call(Context::GetCurrent()->Global(), 0, argv);
+	btn->callback->Call(Context::GetCurrent()->Global(), 0, argv);
 	
 	scope.Close(Undefined());
 }
@@ -143,7 +152,7 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->paused = true;
 	baton->new_frame = false;
 	baton->cue_in_frame = -1;
-	baton->video_frame_number = -1;
+	baton->current_frame= -1;
 	baton->workDemuxReq.data = baton;
 	baton->workSeekReq.data = baton;
 	baton->timerReq.data = baton;
@@ -153,34 +162,30 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 
 void VideoDemux::m_StartDemuxing() {
 	baton->dem_start = uv_now(uv_default_loop());
-	baton->vid_start = baton->video_frame_number * baton->frame_time * 1000.0;
+	baton->vid_start = baton->current_frame * baton->frame_time * 1000.0;
 	baton->paused = false;
 	m_Start(baton);
 	
 	uv_queue_work(uv_default_loop(), &baton->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 }
 
-void VideoDemux::m_PauseDemuxing() {
+void VideoDemux::m_PauseDemuxing(Persistent<Function> callback) {
 	baton->busy = true;
 	
 	baton->paused = true;
-	m_End(baton);
+	baton->callback = callback;
+	//m_End(baton);
 }
 
 void VideoDemux::m_StopDemuxing(Persistent<Function> callback) {
-	baton->paused = true;
 	m_SeekVideo(0.0, callback);
-}
-
-void VideoDemux:: m_VideoStopped() {
-	m_End(baton);
 }
 
 void VideoDemux::m_SeekVideo(double timestamp, Persistent<Function> callback) {
 	baton->busy = true;
 	
 	baton->seek_timestamp = timestamp;
-	baton->seek_callback = callback;
+	baton->callback = callback;
 	
 	if(baton->paused) uv_queue_work(uv_default_loop(), &baton->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
 	else { baton->paused = true; baton->seek_when_ready = true; }
@@ -227,10 +232,9 @@ void VideoDemux::uv_SeekAsync(uv_work_t *req) {
 	if (frameNumber < 0) frameNumber = 0;
 	if (frameNumber > btn->num_frames) frameNumber = btn->num_frames;
 	
-	//printf("desired frame: %lld\n", frameNumber);
 	int delta = 8;
 	
-	if (btn->cue_in_frame < 0) m_DecodeFrame(btn);
+	if (btn->current_frame < 0) m_DecodeFrame(btn);
     
 	int64_t tmp_frameNumber = frameNumber - delta;
 	if (tmp_frameNumber < 0) tmp_frameNumber = 0;
@@ -243,14 +247,8 @@ void VideoDemux::uv_SeekAsync(uv_work_t *req) {
 	
 	do {
 		m_DecodeFrame(btn);
-		btn->video_frame_number = btn->current_frame - btn->cue_in_frame;
-	} while(btn->video_frame_number < frameNumber);
+	} while(btn->current_frame < frameNumber);
 	btn->new_frame = true;
-	
-	if (!btn->paused) {
-		btn->dem_start = uv_now(uv_default_loop());
-		btn->vid_start = btn->video_frame_number * btn->frame_time * 1000.0;
-	}
 }
 
 void VideoDemux::uv_SeekAsyncAfter(uv_work_t *req, int status) {
@@ -283,7 +281,7 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 	}
 	else if (!btn->paused) {
 		uint64_t dem_curr = uv_now(uv_default_loop());
-		uint64_t vid_curr = btn->video_frame_number * btn->frame_time * 1000.0;
+		uint64_t vid_curr = btn->current_frame * btn->frame_time * 1000.0;
 		int64_t diff = (vid_curr - btn->vid_start) - (dem_curr - btn->dem_start);
 		if (diff <= 0) uv_queue_work(uv_default_loop(), &btn->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
 		else uv_timer_start(&btn->timerReq, uv_DemuxTimer, diff, 0);
@@ -294,7 +292,10 @@ void VideoDemux::uv_DemuxAsyncAfter(uv_work_t *req, int status) {
 			uv_queue_work(uv_default_loop(), &btn->workSeekReq, uv_SeekAsync, uv_SeekAsyncAfter);
 			btn->seek_when_ready = false;
 		}
-		else btn->busy = false;
+		else {
+			m_Pause(btn);
+			btn->busy = false;
+		}
 	}
 }
 
@@ -326,7 +327,10 @@ int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 		ret = avcodec_decode_video2(btn->video_dec_ctx, btn->frame, got_frame, &btn->pkt);
 		if(ret < 0) { btn->error = "could not decode video frame"; return -1; }
 		if (*got_frame) {
-			btn->video_frame_number++;
+			btn->new_frame = true;
+			
+			btn->current_time = (double)(btn->frame->pkt_dts - btn->video_stream->start_time) * btn->video_time_base;
+			btn->current_frame = (int64_t)(btn->frame_rate * btn->current_time + 0.5);
 			
 			uint8_t *video_dst_data[4] = { NULL, NULL, NULL, NULL };
 			int video_dst_linesize[4];
@@ -340,16 +344,7 @@ int VideoDemux::m_DecodePacket(DemuxBaton *btn, int *got_frame, int cached) {
 			
 			btn->frame_buffer->setBuffer(video_dst_data[0]);
 			btn->frame_buffer->setBufferSize(ret);
-			btn->frame_buffer->setFrameIndex(btn->video_frame_number);
-			
-			btn->new_frame = true;
-			
-			btn->current_time = (double)(btn->frame->pkt_dts - btn->video_stream->start_time) * btn->video_time_base;
-			btn->current_frame = (int64_t)(btn->frame_rate * btn->current_time + 0.5);
-			if(btn->cue_in_frame < 0) {
-				btn->cue_in_time = (double)(btn->frame->pkt_pts - btn->video_stream->start_time) * btn->video_time_base;
-				btn->cue_in_frame = (int64_t)(btn->frame_rate * btn->cue_in_time + 0.5);
-			}
+			btn->frame_buffer->setFrameIndex(btn->current_frame);
 		}
     }
     return decoded;
@@ -379,7 +374,6 @@ void VideoDemux::Init(Handle<Object> exports) {
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StartDemuxing"), FunctionTemplate::New(StartDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("PauseDemuxing"), FunctionTemplate::New(PauseDemuxing)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("StopDemuxing"), FunctionTemplate::New(StopDemuxing)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("VideoStopped"), FunctionTemplate::New(VideoStopped)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SeekVideo"), FunctionTemplate::New(SeekVideo)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("On"), FunctionTemplate::New(On)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("IsBusy"), FunctionTemplate::New(IsBusy)->GetFunction());
@@ -428,8 +422,15 @@ Handle<Value> VideoDemux::StartDemuxing(const Arguments& args) {
 Handle<Value> VideoDemux::PauseDemuxing(const Arguments& args) {
 	HandleScope scope;
 	
+	if(args.Length() < 1) {
+		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+		return scope.Close(Undefined());
+	}
+	
+	Persistent<Function> callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
+	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_PauseDemuxing();
+	obj->m_PauseDemuxing(callback);
 	
 	return scope.Close(Undefined());
 }
@@ -437,19 +438,15 @@ Handle<Value> VideoDemux::PauseDemuxing(const Arguments& args) {
 Handle<Value> VideoDemux::StopDemuxing(const Arguments& args) {
 	HandleScope scope;
 	
+	if(args.Length() < 1) {
+		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+		return scope.Close(Undefined());
+	}
+	
 	Persistent<Function> callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->m_StopDemuxing(callback);
-	
-	return scope.Close(Undefined());
-}
-
-Handle<Value> VideoDemux::VideoStopped(const Arguments& args) {
-	HandleScope scope;
-	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_VideoStopped();
 	
 	return scope.Close(Undefined());
 }
