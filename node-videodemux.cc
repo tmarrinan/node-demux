@@ -145,8 +145,12 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   baton->format = "rgb32";
 	else                                                       baton->format = "unknown";
 	m_MetaData(baton, baton->width, baton->height, baton->display_aspect_ratio, baton->num_frames, baton->frame_rate, baton->duration, baton->format);
-	
+
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55,28,1)	
 	baton->frame = av_frame_alloc();
+#else
+	baton->frame = avcodec_alloc_frame();
+#endif
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
     
     baton->pkt.data = NULL;
