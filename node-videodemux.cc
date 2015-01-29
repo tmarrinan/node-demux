@@ -137,7 +137,8 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
 	baton->frame_time = 1.0 / baton->frame_rate;
 	baton->video_time_base = (double)baton->video_stream->time_base.num / (double)baton->video_stream->time_base.den;
-	if(baton->num_frames == 0) baton->num_frames = (int64_t)floor((baton->duration * baton->frame_rate) + 0.5);
+	if(baton->display_aspect_ratio <= 0) baton->display_aspect_ratio = (double)baton->width / (double)baton->height;
+	if(baton->num_frames <= 0) baton->num_frames = (int64_t)floor((baton->duration * baton->frame_rate) + 0.5);
 	
 	if      (baton->video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) baton->format = "yuv420p";
 	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
