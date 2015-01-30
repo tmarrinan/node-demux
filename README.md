@@ -16,7 +16,7 @@ FFMpeg (for developers)
 * Mac OS X
     * `brew install ffmpeg --with-libvpx --with-libvorbis --with-ffplay`
 * Linux
-    * Install FFMpeg from your package manager (may need at add repository prior to install)
+    * Install FFMpeg and FFMpeg-Dev from your package manager (may need at add repository prior to install)
 
 
 ### Install ###
