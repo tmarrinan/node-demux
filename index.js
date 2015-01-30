@@ -11,8 +11,9 @@ var messages = [
 function demux() {
 	this.video = new node_demux.VideoDemux();
 	
-	this.load = function(filename) {
-		this.video.LoadVideo(filename);
+	this.load = function(filename, options) {
+		if(options) this.video.LoadVideo(filename, options);
+		else        this.video.LoadVideo(filename);
 	};
 	
 	this.play = function() {

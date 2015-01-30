@@ -79,6 +79,7 @@ struct DemuxBaton {
 	
 	bool busy;
 	bool seek_when_ready;
+	bool decode_first_frame;
 	double seek_timestamp;
 	v8::Persistent<v8::Function> callback;
 	
@@ -142,7 +143,7 @@ class VideoDemux : public node::ObjectWrap {
 		static v8::Handle<v8::Value> IsBusy(const v8::Arguments& args);
 		static v8::Persistent<v8::Function> constructor;
 		
-		void m_LoadVideo(std::string fn);
+		void m_LoadVideo(std::string fn, bool decodeFirstFrame);
 		void m_StartDemuxing();
 		void m_PauseDemuxing(v8::Persistent<v8::Function> callback);
 		void m_StopDemuxing(v8::Persistent<v8::Function> callback);

@@ -114,7 +114,7 @@ void VideoDemux::m_Frame(DemuxBaton *btn, VideoFrame *frm) {
 	scope.Close(Undefined());
 }
 
-void VideoDemux::m_LoadVideo(std::string fn) {
+void VideoDemux::m_LoadVideo(std::string fn, bool decodeFirstFrame) {
 	int ret = 0;
 	baton->filename = fn;
 	
@@ -153,6 +153,8 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 #endif
 	if (!baton->frame) { m_Error(baton, "could not allocate frame"); return; }
     
+    baton->decode_first_frame = decodeFirstFrame;
+    
     baton->pkt.data = NULL;
 	baton->pkt.size = 0;
 	
@@ -165,6 +167,12 @@ void VideoDemux::m_LoadVideo(std::string fn) {
 	baton->timerReq.data = baton;
 	av_init_packet(&baton->pkt);
 	uv_timer_init(uv_default_loop(), &baton->timerReq);
+	
+	if(baton->decode_first_frame) {
+		m_DecodeFrame(baton);
+		m_Frame(baton, baton->frame_buffer);
+		baton->new_frame = false;
+	}
 }
 
 void VideoDemux::m_StartDemuxing() {
@@ -268,6 +276,10 @@ void VideoDemux::uv_SeekAsyncAfter(uv_work_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
 	btn->busy = false;
+	if(btn->decode_first_frame) {
+		m_Frame(btn, btn->frame_buffer);
+		btn->new_frame = false;
+	}
 	m_Seek(btn);
 }
 
@@ -424,8 +436,14 @@ Handle<Value> VideoDemux::LoadVideo(const Arguments& args) {
 		return scope.Close(Undefined());
 	}
 	
+	bool dff = false;
+	if(args.Length() >= 2) {
+		Local<Object> obj = args[1]->ToObject();
+		dff = obj->Get(String::New("decodeFirstFrame"))->ToBoolean()->BooleanValue();
+	}
+	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_LoadVideo(*String::AsciiValue(args[0]->ToString()));
+	obj->m_LoadVideo(*String::AsciiValue(args[0]->ToString()), dff);
 	
 	return scope.Close(Undefined());
 }
