@@ -13,6 +13,9 @@
 						"-lavcodec",
 						"-lavformat",
 						"-lavutil"
+					],
+					'cflags': [
+						"-D__STDC_CONSTANT_MACROS"
 					]
 				},
             ],
