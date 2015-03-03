@@ -26,7 +26,7 @@ VideoDemux::VideoDemux() {
 	baton->busy = false;
 	baton->seek_when_ready = false;
 	
-	baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
+	//baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
 }
 
 VideoDemux::~VideoDemux() {
@@ -157,7 +157,7 @@ void VideoDemux::m_MetaData() {
 	NanScope();
 	
 	if (baton->def_meta) {
-		Local<Object> meta = Object::New();
+		Local<Object> meta = NanNew<Object>();
 		meta->Set(NanNew<String>("width"),                NanNew<Number>(baton->width));
 		meta->Set(NanNew<String>("height"),               NanNew<Number>(baton->height));
 		meta->Set(NanNew<String>("display_aspect_ratio"), NanNew<Number>(baton->display_aspect_ratio));
@@ -165,8 +165,7 @@ void VideoDemux::m_MetaData() {
 		meta->Set(NanNew<String>("frame_rate"),           NanNew<Number>(baton->frame_rate));
 		meta->Set(NanNew<String>("duration"),             NanNew<Number>(baton->duration));
 		meta->Set(NanNew<String>("pixel_format"),         NanNew<String>(baton->format.c_str()));
-		Local<Value> argv[1];
-		argv[0] = Local<Value>::New(meta);
+		Local<Value> argv[1] = {meta};
 		baton->OnMetaData->Call(1, argv);
 	}
 }
