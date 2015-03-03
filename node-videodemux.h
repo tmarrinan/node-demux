@@ -11,6 +11,7 @@ extern "C" {
 #include <nan.h>
 #include <node.h>
 #include <node_buffer.h>
+#include "node-demuxworker.h"
 
 
 
@@ -19,6 +20,9 @@ class VideoDemux : public node::ObjectWrap {
 		static void Init(v8::Handle<v8::Object> exports);
 	
 	private:
+		explicit VideoDemux();
+		~VideoDemux();
+	
 		static NAN_METHOD(New);
 		static NAN_METHOD(LoadVideo);
 		static NAN_METHOD(StartDemuxing);
@@ -30,7 +34,16 @@ class VideoDemux : public node::ObjectWrap {
 		
 		static v8::Persistent<v8::FunctionTemplate> constructor;
 		
+		void m_Error(std::string msg);
+		void m_MetaData();
+		
 		void m_LoadVideo(std::string fn, bool decodeFirstFrame);
+		void m_StartDemuxing();
+		void m_On(std::string type, NanCallback *callback);
+		
+		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
+		
+		DemuxBaton *baton;
 };
 
 

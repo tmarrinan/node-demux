@@ -3,7 +3,9 @@
 		'target_name': "node_demux",
         'sources': [
         	"node-demux.cc",
-        	"node-videodemux.cc"
+        	"node-videodemux.cc",
+        	"node-demuxworker.cc",
+        	"node-videoframe.cc"
         ],
 		'default_configuration': "Release",
 		'conditions': [

@@ -1,4 +1,6 @@
 var fs    = require('fs');
+var path  = require('path');
+
 var demux = require('../../node-demux');
 
 
@@ -20,7 +22,9 @@ video.on('frame', function(frameIdx, data) {
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
 });
 
-video.load("big-buck-bunny_trailer.mp4", {decodeFirstFrame: true});
+video.load(path.join(__dirname, "big-buck-bunny_trailer.mp4"), {decodeFirstFrame: true});
+//video.load("big-buck-bunny_trailer.mp4", {decodeFirstFrame: true});
+video.play();
 
 
 
