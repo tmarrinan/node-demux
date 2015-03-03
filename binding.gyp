@@ -9,6 +9,9 @@
 		'conditions': [
 			['OS=="linux"', 
 				{
+					'include_dirs' : [
+						"<!(node -e \"require('nan')\")"
+					],
 					'libraries': [
 						"-lavcodec",
 						"-lavformat",
@@ -21,6 +24,9 @@
             ],
 			['OS=="mac"',
 				{
+					'include_dirs' : [
+						"<!(node -e \"require('nan')\")"
+					],
 					'libraries': [
 						"-lavcodec",
 						"-lavformat",
@@ -31,7 +37,8 @@
 			['OS=="win"',
 				{
 					'include_dirs': [
-                        "C:/Dev/ffmpeg-win64-dev/include",
+                        "<!(node -e \"require('nan')\")",
+                        "C:/Dev/ffmpeg-win64-dev/include"
                     ],
                     'libraries': [
 						"C:/Dev/ffmpeg-win64-dev/lib/avcodec.lib",

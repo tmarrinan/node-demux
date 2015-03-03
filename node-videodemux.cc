@@ -4,6 +4,110 @@
 using namespace v8;
 
 
+Persistent<FunctionTemplate> VideoDemux::constructor;
+
+void VideoDemux::Init(Handle<Object> exports) {
+	NanScope();
+	
+	// Prepare constructor template
+	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(VideoDemux::New);
+	tpl->SetClassName(NanNew("VideoDemux"));
+	tpl->InstanceTemplate()->SetInternalFieldCount(1);
+	// Prototype
+	NODE_SET_PROTOTYPE_METHOD(tpl, "LoadVideo",     LoadVideo);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "StartDemuxing", StartDemuxing);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "PauseDemuxing", PauseDemuxing);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "StopDemuxing",  StopDemuxing);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "SeekVideo",     SeekVideo);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "On",            On);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "IsBusy",        IsBusy);
+	
+	exports->Set(NanNew<String>("VideoDemux"), tpl->GetFunction());
+	NanAssignPersistent(constructor, tpl);
+}
+
+NAN_METHOD(VideoDemux::New) {
+	NanScope();
+
+	if (!args.IsConstructCall()) {
+		NanThrowError("VideoDemux::New > Cannot call constructor as function, you need to use 'new' keyword");
+		NanReturnUndefined();
+	}
+	else {
+		// Invoked as constructor: `new VideoDemux(...)`
+		VideoDemux *obj = new VideoDemux();
+		obj->Wrap(args.This());
+		NanReturnValue(args.This());
+	}
+}
+
+NAN_METHOD(VideoDemux::LoadVideo) {
+	NanScope();
+	
+	if (args.Length() < 1) {
+		NanThrowError("VideoDemux::LoadVideo > Wrong number of arguments");
+		NanReturnUndefined();
+	}
+	
+	bool dff = false;
+	if (args.Length() >= 2) {
+		Local<Object> obj = args[1]->ToObject();
+		if (obj->Has(NanNew<String>("decodeFirstFrame"))) {
+			dff = obj->Get(NanNew<String>("decodeFirstFrame"))->BooleanValue();
+		}
+	}
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->m_LoadVideo(*NanUtf8String(args[0]), dff);
+	
+	NanReturnUndefined();
+}
+
+NAN_METHOD(VideoDemux::StartDemuxing) {
+	NanScope();
+	
+	NanReturnUndefined();
+}
+
+NAN_METHOD(VideoDemux::PauseDemuxing) {
+	NanScope();
+	
+	NanReturnUndefined();
+}
+
+NAN_METHOD(VideoDemux::StopDemuxing) {
+	NanScope();
+	
+	NanReturnUndefined();
+}
+
+NAN_METHOD(VideoDemux::SeekVideo) {
+	NanScope();
+	
+	NanReturnUndefined();
+}
+
+NAN_METHOD(VideoDemux::On) {
+	NanScope();
+	
+	NanReturnUndefined();
+}
+
+NAN_METHOD(VideoDemux::IsBusy) {
+	NanScope();
+	
+	NanReturnUndefined();
+}
+
+
+void VideoDemux::m_LoadVideo(std::string fn, bool decodeFirstFrame) {
+	printf("loading %s (decode first frame: %d)\n", fn.c_str(), decodeFirstFrame);
+}
+
+
+
+/*
+
 Persistent<Function> VideoDemux::constructor;
 
 VideoDemux::VideoDemux() {
@@ -530,4 +634,4 @@ Handle<Value> VideoDemux::IsBusy(const Arguments& args) {
 	
 	return scope.Close(Boolean::New(obj->baton->busy));
 }
-	
+*/	

@@ -2,6 +2,29 @@ var fs    = require('fs');
 var demux = require('../../node-demux');
 
 
+var video = new demux();
+
+video.on('error', function(err) {
+    console.log(err);
+});
+video.on('metadata', function(metadata) {
+    console.log(metadata);
+});
+video.on('start', function() {
+    console.log("start demuxing");
+});
+video.on('end', function() {
+    console.log("finished demuxing");
+});
+video.on('frame', function(frameIdx, data) {
+    console.log("received frame " + frameIdx + " (size: " + data.length + ")");
+});
+
+video.load("big-buck-bunny_trailer.mp4", {decodeFirstFrame: true});
+
+
+
+/*
 var start;
 var nframes;
 var format;
@@ -29,18 +52,17 @@ video.on('frame', function(frameIdx, data) {
     nframes++;
     console.log("received frame " + frameIdx + " (size: " + data.length + ")");
 	
-	/*
-    if(frameIdx === 100) {
-    	video.stop(function() {
-			console.log("video stopped");
-		});
-    }*/
+    //if(frameIdx === 100) {
+    //	video.stop(function() {
+	//		console.log("video stopped");
+	//	});
+    //}
 });
 video.load("big-buck-bunny_trailer.mp4", {decodeFirstFrame: true});
-/*video.seek(9.8, function() {
-	console.log("seek 1 complete");
-	video.play();
-});*/
+//video.seek(9.8, function() {
+//	console.log("seek 1 complete");
+//	video.play();
+//});
 
 setTimeout(function() {
 	video.seek(9.8, function(){
@@ -50,4 +72,4 @@ setTimeout(function() {
 		}, 1000);
 	});
 }, 1500);
-
+*/

@@ -8,10 +8,51 @@ extern "C" {
 }
 #include <string>
 #include <vector>
+#include <nan.h>
 #include <node.h>
 #include <node_buffer.h>
 
 
+
+class VideoDemux : public node::ObjectWrap {
+	public:
+		static void Init(v8::Handle<v8::Object> exports);
+	
+	private:
+		static NAN_METHOD(New);
+		static NAN_METHOD(LoadVideo);
+		static NAN_METHOD(StartDemuxing);
+		static NAN_METHOD(PauseDemuxing);
+		static NAN_METHOD(StopDemuxing);
+		static NAN_METHOD(SeekVideo);
+		static NAN_METHOD(On);
+		static NAN_METHOD(IsBusy);
+		
+		static v8::Persistent<v8::FunctionTemplate> constructor;
+		
+		void m_LoadVideo(std::string fn, bool decodeFirstFrame);
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 class VideoFrame {
 	public:
 		VideoFrame() {
@@ -153,5 +194,7 @@ class VideoDemux : public node::ObjectWrap {
 		
 		DemuxBaton *baton;
 };
+*/
+
 
 #endif // VIDEODEMUX_H
