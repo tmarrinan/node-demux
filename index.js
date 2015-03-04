@@ -21,6 +21,8 @@ function demux() {
 	};
 	
 	this.pause = function(cb) {
+		this.video.PauseDemuxing(cb);
+		/*
 		if(!this.video.IsBusy()){
 			this.video.PauseDemuxing(cb);
 		}
@@ -30,9 +32,12 @@ function demux() {
 				_this.pause(cb);
 			}, 16);
 		}
+		*/
 	};
 	
 	this.stop = function(cb) {
+		this.video.StopDemuxing(cb);
+		/*
 		if(!this.video.IsBusy()){
 			this.video.StopDemuxing(cb);
 		}
@@ -42,9 +47,13 @@ function demux() {
 				_this.stop(cb);
 			}, 16);
 		}
+		*/
 	};
 	
 	this.seek = function(timestamp, cb) {
+		this.video.SeekVideo(timestamp, cb);
+		
+		/*
 		if(!this.video.IsBusy()){
 			this.video.SeekVideo(timestamp, cb);
 		}
@@ -54,6 +63,7 @@ function demux() {
 				_this.seek(timestamp, cb);
 			}, 16);
 		}
+		*/
 	};
 	
 	this.on = function(type, cb) {

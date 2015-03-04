@@ -1,6 +1,7 @@
 #include "loadworker.h"
 
 void LoadWorker::Execute() {
+	baton->state = DS_LOAD;
 	baton->filename = filename;
 	baton->decode_first_frame = decodeFirstFrame;
 	OpenVideoFile();
@@ -14,8 +15,27 @@ void LoadWorker::HandleOKCallback() {
 	}
 	else {
 		baton->m_MetaData();
-		if(baton->decode_first_frame) {
-			// queue demuxworker --> decode 1 frame
+		baton->state = DS_IDLE;
+		switch (baton->action) {
+			case DA_LOAD:
+				if(baton->decode_first_frame) {
+					NanAsyncQueueWorker(new DemuxWorker(baton, false));
+				}
+				baton->action = DA_NONE;
+				break;
+			case DA_PLAY:
+				baton->demux_start = uv_now(uv_default_loop());
+				baton->video_start = baton->current_frame * baton->frame_time * 1000.0;
+				//obj->baton->paused = false;
+				baton->m_Start();
+				NanAsyncQueueWorker(new DemuxWorker(baton, true));
+				break;
+			case DA_PAUSE:
+				break;
+			case DA_SEEK:
+				break;
+			default:
+				break;
 		}
 	}
 }
@@ -60,10 +80,10 @@ void LoadWorker::OpenVideoFile() {
     baton->pkt.data = NULL;
 	baton->pkt.size = 0;
 	
-	baton->paused = true;
-	baton->new_frame = false;
-	baton->cue_in_frame = -1;
-	baton->current_frame= -1;
+	//baton->paused = true;
+	//baton->new_frame = false;
+	//baton->cue_in_frame = -1;
+	//baton->current_frame= -1;
 	av_init_packet(&baton->pkt);
 }
 

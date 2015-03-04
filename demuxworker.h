@@ -14,14 +14,20 @@ extern "C" {
 
 class DemuxWorker : public NanAsyncWorker {
 	public:
-		DemuxWorker(DemuxBaton *btn)
-			: NanAsyncWorker(NULL), baton(btn) {};
+		DemuxWorker(DemuxBaton *btn, bool cont)
+			: NanAsyncWorker(NULL), baton(btn), continuous(cont) {};
 		~DemuxWorker() {};
 		
 		void Execute();
 		void HandleOKCallback();
+		
+		void DecodeFrame();
+		int DecodePacket(int *got_frame, int cached);
+		
+		static void uv_DemuxTimer(uv_timer_t *req, int status);
 	private:
 		DemuxBaton *baton;
+		bool continuous;
 };
 
 #endif // DEMUXWORKER_H

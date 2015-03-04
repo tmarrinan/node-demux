@@ -11,7 +11,6 @@ video.on('error', function(err) {
 });
 video.on('metadata', function(metadata) {
     console.log(metadata);
-    console.log(metadata.test_buffer.toString());
     video.play();
 });
 video.on('start', function() {

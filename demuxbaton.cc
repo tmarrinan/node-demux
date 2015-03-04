@@ -1,5 +1,39 @@
 #include "demuxbaton.h"
 
+DemuxBaton::DemuxBaton() {
+	timerReq.data = this;
+	uv_timer_init(uv_default_loop(), &timerReq);
+	
+	fmt_ctx           = NULL;
+	video_dec_ctx     = NULL;
+	video_stream      = NULL;
+	frame             = NULL;
+	video_stream_idx  = -1;
+	frame_buffer = new VideoFrame();
+	//finished = false;
+	error = "";
+	
+	def_err   = false;
+	def_start = false;
+	def_end   = false;
+	def_frame = false;
+	
+	//busy = false;
+	//seek_when_ready = false;
+	
+	state = DS_IDLE;
+	action = DA_NONE;
+	
+#if (NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION == 10)
+	NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
+#endif
+}
+
+DemuxBaton::~DemuxBaton() {
+
+}
+
+
 void DemuxBaton::m_Error(std::string msg) {
 	NanScope();
 

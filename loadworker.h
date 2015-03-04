@@ -11,6 +11,7 @@ extern "C" {
 #include <node.h>
 #include <nan.h>
 #include "demuxbaton.h"
+#include "demuxworker.h"
 
 class LoadWorker : public NanAsyncWorker {
 	public:

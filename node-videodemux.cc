@@ -8,26 +8,6 @@ Persistent<FunctionTemplate> VideoDemux::constructor;
 
 VideoDemux::VideoDemux() {
 	baton = new DemuxBaton();
-	baton->fmt_ctx           = NULL;
-	baton->video_dec_ctx     = NULL;
-	baton->video_stream      = NULL;
-	baton->frame             = NULL;
-	baton->video_stream_idx  = -1;
-	baton->frame_buffer = new VideoFrame();
-	baton->finished = false;
-	baton->error = "";
-	
-	baton->def_err   = false;
-	baton->def_start = false;
-	baton->def_end   = false;
-	baton->def_frame = false;
-	
-	baton->busy = false;
-	baton->seek_when_ready = false;
-	
-#if (NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION == 10)
-	baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
-#endif
 }
 
 VideoDemux::~VideoDemux() {
@@ -88,7 +68,10 @@ NAN_METHOD(VideoDemux::LoadVideo) {
 	}
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	NanAsyncQueueWorker(new LoadWorker(obj->baton, *NanUtf8String(args[0]), dff));
+	obj->baton->action = DA_LOAD;
+	if(obj->baton->state == DS_IDLE) {
+		NanAsyncQueueWorker(new LoadWorker(obj->baton, *NanUtf8String(args[0]), dff));
+	}
 	
 	NanReturnUndefined();
 }
@@ -97,11 +80,14 @@ NAN_METHOD(VideoDemux::StartDemuxing) {
 	NanScope();
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->baton->dem_start = uv_now(uv_default_loop());
-	obj->baton->vid_start = obj->baton->current_frame * obj->baton->frame_time * 1000.0;
-	obj->baton->paused = false;
-	obj->baton->m_Start();
-	NanAsyncQueueWorker(new DemuxWorker(obj->baton));
+	obj->baton->action = DA_PLAY;
+	if(obj->baton->state == DS_IDLE) {
+		obj->baton->demux_start = uv_now(uv_default_loop());
+		obj->baton->video_start = obj->baton->current_frame * obj->baton->frame_time * 1000.0;
+		//obj->baton->paused = false;
+		obj->baton->m_Start();
+		NanAsyncQueueWorker(new DemuxWorker(obj->baton, true));
+	}
 	
 	NanReturnUndefined();
 }
