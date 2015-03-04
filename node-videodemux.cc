@@ -25,7 +25,9 @@ VideoDemux::VideoDemux() {
 	baton->busy = false;
 	baton->seek_when_ready = false;
 	
-	//baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
+#if (NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION == 10)
+	baton->NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
+#endif
 }
 
 VideoDemux::~VideoDemux() {
@@ -58,7 +60,7 @@ NAN_METHOD(VideoDemux::New) {
 	NanScope();
 
 	if (!args.IsConstructCall()) {
-		NanThrowError("VideoDemux::New > Cannot call constructor as function, you need to use 'new' keyword");
+		NanThrowError("VideoDemux::New - Cannot call constructor as function, you need to use 'new' keyword");
 		NanReturnUndefined();
 	}
 	else {
@@ -73,7 +75,7 @@ NAN_METHOD(VideoDemux::LoadVideo) {
 	NanScope();
 	
 	if (args.Length() < 1) {
-		NanThrowError("VideoDemux::LoadVideo > Wrong number of arguments");
+		NanThrowError("VideoDemux::LoadVideo - Wrong number of arguments");
 		NanReturnUndefined();
 	}
 	
@@ -126,7 +128,7 @@ NAN_METHOD(VideoDemux::On) {
 	NanScope();
 	
 	if(args.Length() < 2) {
-		NanThrowError("VideoDemux::On > Wrong number of arguments");
+		NanThrowError("VideoDemux::On - Wrong number of arguments");
 		NanReturnUndefined();
 	}
 	

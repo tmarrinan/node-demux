@@ -6,19 +6,19 @@
 class VideoFrame {
 	public:
 		VideoFrame();
-		VideoFrame(uint8_t *b, size_t s, uint32_t f);
+		VideoFrame(uint8_t *b, uint32_t s, uint32_t f);
 		~VideoFrame();
 		
 		uint8_t* getBuffer();
-		size_t getBufferSize();
+		uint32_t getBufferSize();
 		int64_t getFrameIndex();
 		void setBuffer(uint8_t *b);
-		void setBufferSize(size_t s);
+		void setBufferSize(uint32_t s);
 		void setFrameIndex(int64_t f);
 		
 	private:
 		uint8_t *buf;
-		size_t size;
+		uint32_t size;
 		int64_t frame_idx;
 };
 

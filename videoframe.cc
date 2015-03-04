@@ -6,7 +6,7 @@ VideoFrame::VideoFrame() {
 	frame_idx = 0;
 };
 		
-VideoFrame::VideoFrame(uint8_t *b, size_t s, uint32_t f) {
+VideoFrame::VideoFrame(uint8_t *b, uint32_t s, uint32_t f) {
 	buf = b;
 	size = s;
 	frame_idx = f;
@@ -18,7 +18,7 @@ VideoFrame::~VideoFrame() {
 uint8_t* VideoFrame::getBuffer() {
 	return buf;
 }
-size_t VideoFrame::getBufferSize() {
+uint32_t VideoFrame::getBufferSize() {
 	return size;
 }
 int64_t VideoFrame::getFrameIndex() {
@@ -27,7 +27,7 @@ int64_t VideoFrame::getFrameIndex() {
 void VideoFrame::setBuffer(uint8_t *b) {
 	buf = b;
 }
-void VideoFrame::setBufferSize(size_t s) {
+void VideoFrame::setBufferSize(uint32_t s) {
 	size = s;
 }
 void VideoFrame::setFrameIndex(int64_t f) {

@@ -18,6 +18,8 @@ class DemuxBaton {
 		void m_Error(std::string msg);
 		void m_MetaData();
 		void m_Start();
+		void m_End();
+		void m_Frame(VideoFrame *frm);
 	
 	
 		AVFormatContext *fmt_ctx;
@@ -65,12 +67,13 @@ class DemuxBaton {
 		bool def_start;
 		bool def_end;
 		bool def_frame;
-		v8::Persistent<v8::Function> NodeBuffer;
 		NanCallback *OnError;
 		NanCallback *OnMetaData;
 		NanCallback *OnStart;
 		NanCallback *OnEnd;
 		NanCallback *OnFrame;
+		
+		v8::Persistent<v8::Function> NodeBuffer;
 };
 
 #endif // DEMUXBATON_H
