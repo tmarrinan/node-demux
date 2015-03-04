@@ -12,12 +12,15 @@ void DemuxWorker::HandleOKCallback() {
 		baton->m_Error(baton->error);
 	}
 	else {
-		baton->m_Frame(baton->frame_buffer);
 		baton->state = DS_IDLE;
 		switch (baton->action) {
+			case DA_NONE:
+				baton->m_Frame(baton->frame_buffer);
+				break;
 			case DA_LOAD:
 				break;
 			case DA_PLAY:
+				baton->m_Frame(baton->frame_buffer);
 				if(continuous) {
 					// timer to call DemuxWorker again
 					uint64_t demux_curr = uv_now(uv_default_loop());
@@ -31,8 +34,13 @@ void DemuxWorker::HandleOKCallback() {
 				}
 				break;
 			case DA_PAUSE:
+				baton->m_Frame(baton->frame_buffer);
 				break;
 			case DA_SEEK:
+				baton->m_Frame(baton->frame_buffer);
+				break;
+			case DA_END:
+				baton->m_End();
 				break;
 			default:
 				break;
@@ -64,7 +72,7 @@ void DemuxWorker::DecodeFrame() {
 	baton->pkt.data = NULL;
 	baton->pkt.size = 0;
 	DecodePacket(&got_frame, 1);
-	if (!got_frame) ;//baton->finished = true;
+	if (!got_frame) baton->action = DA_END;
 }
 
 int DemuxWorker::DecodePacket(int *got_frame, int cached) {
