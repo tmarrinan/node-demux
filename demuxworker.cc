@@ -109,3 +109,9 @@ void DemuxWorker::uv_DemuxTimer(uv_timer_t *req, int status) {
 	
 	NanAsyncQueueWorker(new DemuxWorker(btn, true));
 }
+
+void DemuxWorker::uv_DemuxTimer(uv_timer_t *req) {
+	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
+	
+	NanAsyncQueueWorker(new DemuxWorker(btn, true));
+}

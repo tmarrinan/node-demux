@@ -25,6 +25,7 @@ class DemuxWorker : public NanAsyncWorker {
 		int DecodePacket(int *got_frame, int cached);
 		
 		static void uv_DemuxTimer(uv_timer_t *req, int status);
+		static void uv_DemuxTimer(uv_timer_t *req);
 	private:
 		DemuxBaton *baton;
 		bool continuous;

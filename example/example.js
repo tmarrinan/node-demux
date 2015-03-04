@@ -11,7 +11,9 @@ video.on('error', function(err) {
 });
 video.on('metadata', function(metadata) {
     console.log(metadata);
-    video.play();
+	setTimeout(function() {
+		video.play();
+	}, 1500);
 });
 video.on('start', function() {
     console.log("start demuxing");

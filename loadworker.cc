@@ -83,7 +83,7 @@ void LoadWorker::OpenVideoFile() {
 	//baton->paused = true;
 	//baton->new_frame = false;
 	//baton->cue_in_frame = -1;
-	//baton->current_frame= -1;
+	baton->current_frame= -1;
 	av_init_packet(&baton->pkt);
 }
 
