@@ -1,5 +1,5 @@
-#ifndef VIDEODEMUX_H
-#define VIDEODEMUX_H
+#ifndef NODE_VIDEODEMUX_H
+#define NODE_VIDEODEMUX_H
 
 extern "C" {
 	#include <libavcodec/avcodec.h>
@@ -11,7 +11,8 @@ extern "C" {
 #include <nan.h>
 #include <node.h>
 #include <node_buffer.h>
-#include "node-demuxworker.h"
+#include "loadworker.h"
+#include "demuxworker.h"
 
 
 
@@ -33,15 +34,6 @@ class VideoDemux : public node::ObjectWrap {
 		static NAN_METHOD(IsBusy);
 		
 		static v8::Persistent<v8::FunctionTemplate> constructor;
-		
-		void m_Error(std::string msg);
-		void m_MetaData();
-		
-		void m_LoadVideo(std::string fn, bool decodeFirstFrame);
-		void m_StartDemuxing();
-		void m_On(std::string type, NanCallback *callback);
-		
-		int m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		
 		DemuxBaton *baton;
 };
@@ -210,4 +202,4 @@ class VideoDemux : public node::ObjectWrap {
 */
 
 
-#endif // VIDEODEMUX_H
+#endif // NODE_VIDEODEMUX_H

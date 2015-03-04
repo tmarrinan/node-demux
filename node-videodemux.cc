@@ -7,7 +7,6 @@ using namespace v8;
 Persistent<FunctionTemplate> VideoDemux::constructor;
 
 VideoDemux::VideoDemux() {
-	printf("Initialized!\n");
 	baton = new DemuxBaton();
 	baton->fmt_ctx           = NULL;
 	baton->video_dec_ctx     = NULL;
@@ -87,7 +86,7 @@ NAN_METHOD(VideoDemux::LoadVideo) {
 	}
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_LoadVideo(*NanUtf8String(args[0]), dff);
+	NanAsyncQueueWorker(new LoadWorker(obj->baton, *NanUtf8String(args[0]), dff));
 	
 	NanReturnUndefined();
 }
@@ -96,7 +95,11 @@ NAN_METHOD(VideoDemux::StartDemuxing) {
 	NanScope();
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_StartDemuxing();
+	obj->baton->dem_start = uv_now(uv_default_loop());
+	obj->baton->vid_start = obj->baton->current_frame * obj->baton->frame_time * 1000.0;
+	obj->baton->paused = false;
+	obj->baton->m_Start();
+	NanAsyncQueueWorker(new DemuxWorker(obj->baton));
 	
 	NanReturnUndefined();
 }
@@ -131,7 +134,26 @@ NAN_METHOD(VideoDemux::On) {
 	NanCallback *callback = new NanCallback(args[1].As<Function>());
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
-	obj->m_On(type, callback);
+	if (type == "error") {
+		obj->baton->def_err = true;
+		obj->baton->OnError = callback;
+	}
+	else if (type == "metadata") {
+		obj->baton->def_meta = true;
+		obj->baton->OnMetaData = callback;
+	}
+	else if (type == "start") {
+		obj->baton->def_start = true;
+		obj->baton->OnStart = callback;
+	}
+	else if (type == "end") {
+		obj->baton->def_end = true;
+		obj->baton->OnEnd = callback;
+	}
+	else if (type == "frame") {
+		obj->baton->def_frame = true;
+		obj->baton->OnFrame = callback;
+	}
 	
 	NanReturnUndefined();
 }
@@ -140,148 +162,6 @@ NAN_METHOD(VideoDemux::IsBusy) {
 	NanScope();
 	
 	NanReturnUndefined();
-}
-
-
-/**********************************************************************************/
-void VideoDemux::m_Error(std::string msg) {
-	NanScope();
-	
-	if (baton->def_err) {
-		Local<Value> argv[1] = { NanNew<String>(msg.c_str()) };
-		baton->OnError->Call(1, argv);
-	}
-}
-
-void VideoDemux::m_MetaData() {
-	NanScope();
-	
-	if (baton->def_meta) {
-		Local<Object> meta = NanNew<Object>();
-		meta->Set(NanNew<String>("width"),                NanNew<Number>(baton->width));
-		meta->Set(NanNew<String>("height"),               NanNew<Number>(baton->height));
-		meta->Set(NanNew<String>("display_aspect_ratio"), NanNew<Number>(baton->display_aspect_ratio));
-		meta->Set(NanNew<String>("num_frames"),           NanNew<Number>(baton->num_frames));
-		meta->Set(NanNew<String>("frame_rate"),           NanNew<Number>(baton->frame_rate));
-		meta->Set(NanNew<String>("duration"),             NanNew<Number>(baton->duration));
-		meta->Set(NanNew<String>("pixel_format"),         NanNew<String>(baton->format.c_str()));
-		Local<Value> argv[1] = {meta};
-		baton->OnMetaData->Call(1, argv);
-	}
-}
-
-
-/**********************************************************************************/
-void VideoDemux::m_LoadVideo(std::string fn, bool decodeFirstFrame) {
-	int ret = 0;
-	baton->filename = fn;
-	
-	// open input file, and allocate format context
-	ret = avformat_open_input(&baton->fmt_ctx, baton->filename.c_str(), NULL, NULL);
-	if (ret < 0) { m_Error("could not open source file: " + baton->filename); return; }
-	ret = avformat_find_stream_info(baton->fmt_ctx, NULL);
-	if (ret < 0) { m_Error("could not find stream information"); return; }
-	ret = m_OpenCodecContext(&baton->video_stream_idx, baton->fmt_ctx);
-	if (ret < 0) { return; }
-	baton->video_stream = baton->fmt_ctx->streams[baton->video_stream_idx];
-	baton->video_dec_ctx = baton->video_stream->codec;
-	
-	// get video metadata
-	baton->width  = baton->video_dec_ctx->width;
-	baton->height = baton->video_dec_ctx->height;
-	baton->display_aspect_ratio = (double)(baton->width * baton->video_dec_ctx->sample_aspect_ratio.num) / (double)(baton->height * baton->video_dec_ctx->sample_aspect_ratio.den);
-	baton->num_frames = baton->video_stream->nb_frames;
-	baton->duration = (double)baton->fmt_ctx->duration / (double)AV_TIME_BASE;
-	baton->frame_rate = (double)baton->video_stream->avg_frame_rate.num/(double)baton->video_stream->avg_frame_rate.den;
-	baton->frame_time = 1.0 / baton->frame_rate;
-	baton->video_time_base = (double)baton->video_stream->time_base.num / (double)baton->video_stream->time_base.den;
-	if(baton->display_aspect_ratio <= 0) baton->display_aspect_ratio = (double)baton->width / (double)baton->height;
-	if(baton->num_frames <= 0) baton->num_frames = (int64_t)floor((baton->duration * baton->frame_rate) + 0.5);
-	
-	if      (baton->video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) baton->format = "yuv420p";
-	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   baton->format = "rgb24";
-	else if (baton->video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   baton->format = "rgb32";
-	else                                                       baton->format = "unknown";
-	
-	m_MetaData();
-
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55,28,1)	
-	baton->frame = av_frame_alloc();
-#else
-	baton->frame = avcodec_alloc_frame();
-#endif
-	if (!baton->frame) { m_Error("could not allocate frame"); return; }
-    
-    baton->decode_first_frame = decodeFirstFrame;
-    
-    baton->pkt.data = NULL;
-	baton->pkt.size = 0;
-	
-	baton->paused = true;
-	baton->new_frame = false;
-	baton->cue_in_frame = -1;
-	baton->current_frame= -1;
-	av_init_packet(&baton->pkt);
-}
-
-void VideoDemux::m_StartDemuxing() {
-	
-	
-	NanAsyncQueueWorker(new DemuxWorker(NULL, baton));
-	
-	/*
-	baton->dem_start = uv_now(uv_default_loop());
-	baton->vid_start = baton->current_frame * baton->frame_time * 1000.0;
-	baton->paused = false;
-	m_Start(baton);
-	
-	uv_queue_work(uv_default_loop(), &baton->workDemuxReq, uv_DemuxAsync, uv_DemuxAsyncAfter);
-	*/
-}
-
-void VideoDemux::m_On(std::string type, NanCallback *callback) {
-	if (type == "error") {
-		baton->def_err = true;
-		baton->OnError = callback;
-	}
-	else if (type == "metadata") {
-		baton->def_meta = true;
-		baton->OnMetaData = callback;
-	}
-	else if (type == "start") {
-		baton->def_start = true;
-		baton->OnStart = callback;
-	}
-	else if (type == "end") {
-		baton->def_end = true;
-		baton->OnEnd = callback;
-	}
-	else if (type == "frame") {
-		baton->def_frame = true;
-		baton->OnFrame = callback;
-	}
-}
-
-
-
-int VideoDemux::m_OpenCodecContext(int *stream_idx, AVFormatContext *fctx) {
-    int ret;
-    AVStream *st;
-    AVCodecContext *cctx = NULL;
-    AVCodec *codec = NULL;
-    ret = av_find_best_stream(fctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (ret < 0) { m_Error("could not find video stream in input file"); return -1; }
-    
-	*stream_idx = ret;
-	st = fctx->streams[*stream_idx];
-	// find decoder for the stream
-	cctx = st->codec;
-	codec = avcodec_find_decoder(cctx->codec_id);
-	if (!codec) { m_Error("failed to find codec"); return -1; };
-	ret = avcodec_open2(cctx, codec, NULL);
-	if (ret < 0) { m_Error("failed to open codec"); return -1; }
-	
-    return 0;
 }
 
 

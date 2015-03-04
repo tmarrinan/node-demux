@@ -4,8 +4,10 @@
         'sources': [
         	"node-demux.cc",
         	"node-videodemux.cc",
-        	"node-demuxworker.cc",
-        	"node-videoframe.cc"
+        	"loadworker.cc",
+        	"demuxworker.cc",
+        	"demuxbaton.cc",
+        	"videoframe.cc"
         ],
 		'default_configuration': "Release",
 		'conditions': [
