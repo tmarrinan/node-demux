@@ -9,8 +9,15 @@ void LoadWorker::Execute() {
 void LoadWorker::HandleOKCallback() {
 	NanScope();
 	
-	if(baton->error != "") baton->m_Error(baton->error);
-	else baton->m_MetaData();
+	if(baton->error != "") {
+		baton->m_Error(baton->error);
+	}
+	else {
+		baton->m_MetaData();
+		if(baton->decode_first_frame) {
+			// queue demuxworker --> decode 1 frame
+		}
+	}
 }
 
 void LoadWorker::OpenVideoFile() {
