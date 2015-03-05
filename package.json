@@ -1,6 +1,6 @@
 {
   "name": "node-demux",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Video Demuxer",
   "main": "index.js",
   "repository": {
@@ -12,7 +12,8 @@
   },
   "keywords": [
     "video",
-    "demux"
+    "demux",
+    "nan"
   ],
   "author": "Thomas Marrinan",
   "license": "BSD-3-Clause"
