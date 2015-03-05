@@ -70,6 +70,7 @@ NAN_METHOD(VideoDemux::LoadVideo) {
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->baton->action = DA_LOAD;
 	if(obj->baton->state == DS_IDLE) {
+        obj->baton->state = DS_LOAD;
 		NanAsyncQueueWorker(new LoadWorker(obj->baton, *NanUtf8String(args[0]), dff));
 	}
 	
@@ -82,6 +83,7 @@ NAN_METHOD(VideoDemux::StartDemuxing) {
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->baton->action = DA_PLAY;
 	if(obj->baton->state == DS_IDLE) {
+        obj->baton->state = DS_DEMUX;
 		obj->baton->demux_start = uv_now(uv_default_loop());
 		obj->baton->video_start = obj->baton->current_frame * obj->baton->frame_time * 1000.0;
 		//obj->baton->paused = false;
@@ -125,6 +127,7 @@ NAN_METHOD(VideoDemux::StopDemuxing) {
 	obj->baton->seek_timestamp = timestamp;
 	obj->baton->SeekCallback = callback;
 	if(obj->baton->state == DS_IDLE) {
+        obj->baton->state = DS_SEEK;
 		NanAsyncQueueWorker(new SeekWorker(obj->baton));
 	}
 	
@@ -147,6 +150,7 @@ NAN_METHOD(VideoDemux::SeekVideo) {
 	obj->baton->seek_timestamp = timestamp;
 	obj->baton->SeekCallback = callback;
 	if(obj->baton->state == DS_IDLE) {
+        obj->baton->state = DS_SEEK;
 		NanAsyncQueueWorker(new SeekWorker(obj->baton));
 	}
 	
