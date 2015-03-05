@@ -10,7 +10,6 @@ DemuxBaton::DemuxBaton() {
 	frame             = NULL;
 	video_stream_idx  = -1;
 	frame_buffer = new VideoFrame();
-	//finished = false;
 	error = "";
 	
 	def_err   = false;
@@ -18,11 +17,11 @@ DemuxBaton::DemuxBaton() {
 	def_end   = false;
 	def_frame = false;
 	
-	//busy = false;
-	//seek_when_ready = false;
-	
 	state = DS_IDLE;
 	action = DA_NONE;
+	
+	PauseCallback = NULL;
+	SeekCallback = NULL;
 	
 #if (NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION == 10)
 	NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
@@ -101,11 +100,22 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 	}
 }
 
+void DemuxBaton::m_Pause() {
+	NanScope();
+	
+	Local<Value> argv[1];
+	PauseCallback->Call(0, argv);
+	delete PauseCallback;
+	PauseCallback = NULL;
+}
+
 void DemuxBaton::m_Seek() {
 	NanScope();
 	
 	Local<Value> argv[1];
 	SeekCallback->Call(0, argv);
+	delete SeekCallback;
+	SeekCallback = NULL;
 }
 
 

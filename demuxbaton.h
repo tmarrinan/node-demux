@@ -30,6 +30,7 @@ class DemuxBaton {
 		void m_Start();
 		void m_End();
 		void m_Frame(VideoFrame *frm);
+		void m_Pause();
 		void m_Seek();
 		
 		// demux methods
@@ -86,6 +87,9 @@ class DemuxBaton {
 		double seek_timestamp;
 		NanCallback *SeekCallback;
 		
+		// variables for pausing video
+		NanCallback *PauseCallback;
+		
 		// js callback functions
 		bool def_err;
 		bool def_meta;
@@ -100,26 +104,6 @@ class DemuxBaton {
 		
 		// NodeJS Buffer creator - version 0.10.X
 		v8::Persistent<v8::Function> NodeBuffer;
-		
-		/*
-		bool busy;
-		bool seek_when_ready;
-		//bool decode_first_frame;
-		//double seek_timestamp;
-		//v8::Persistent<v8::Function> callback;
-	
-		//double current_time;
-		//int64_t current_frame;
-		double cue_in_time;
-		int64_t cue_in_frame;
-	
-		//uint64_t dem_start;
-		//uint64_t vid_start;
-		bool new_frame;
-		bool finished;
-		bool paused;
-		//std::string error;
-		*/
 };
 
 #endif // DEMUXBATON_H

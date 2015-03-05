@@ -11,14 +11,6 @@ video.on('error', function(err) {
 });
 video.on('metadata', function(metadata) {
     console.log(metadata);
-	/*setTimeout(function() {
-		video.pause();
-	}, 1200);*/
-	setTimeout(function() {
-		video.stop(function() {
-			console.log("seek finished");
-		});
-	}, 1500);
 });
 video.on('start', function() {
     console.log("start demuxing");
@@ -31,11 +23,32 @@ video.on('frame', function(frameIdx, data) {
 });
 
 video.load(path.join(__dirname, "big-buck-bunny_trailer.mp4"), {decodeFirstFrame: true});
-// DON'T CALL `video.play()` UNTIL METADATA CALLBACK IS TRIGGERED
-video.seek(13.2, function() {
-	console.log("seek finished");
+video.play();
+setTimeout(function() {
+	video.pause(function() {
+		console.log("paused: 1.5 sec");
+	});
+}, 1500);
+setTimeout(function() {
 	video.play();
-});
+	console.log("play: 3.0 sec");
+}, 3000);
+setTimeout(function() {
+	video.pause(function() {
+		console.log("paused: 4.5 sec");
+	});
+}, 4500);
+setTimeout(function() {
+	video.play();
+	console.log("play: 6.0 sec");
+}, 6000);
+setTimeout(function() {
+	video.seek(13.2, function() {
+		console.log("seeked: 7.5 sec");
+		video.play();
+		console.log("play: 7.5 sec");
+	});
+}, 7500);
 
 
 

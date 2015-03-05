@@ -30,11 +30,13 @@ void SeekWorker::HandleOKCallback() {
 				break;
 			case DA_PAUSE:
 				baton->action = DA_NONE;
+				baton->m_Pause();
 				break;
 			case DA_SEEK:
 				baton->action = DA_NONE;
 				break;
 			case DA_END:
+				baton->action = DA_NONE;
 				baton->m_End();
 				break;
 			default:

@@ -18,10 +18,10 @@ void LoadWorker::HandleOKCallback() {
 		baton->state = DS_IDLE;
 		switch (baton->action) {
 			case DA_LOAD:
+				baton->action = DA_NONE;
 				if(baton->decode_first_frame) {
 					NanAsyncQueueWorker(new DemuxWorker(baton, false));
 				}
-				baton->action = DA_NONE;
 				break;
 			case DA_PLAY:
 				baton->demux_start = uv_now(uv_default_loop());
@@ -31,11 +31,13 @@ void LoadWorker::HandleOKCallback() {
 				break;
 			case DA_PAUSE:
 				baton->action = DA_NONE;
+				baton->m_Pause();
 				break;
 			case DA_SEEK:
 				NanAsyncQueueWorker(new SeekWorker(baton));
 				break;
 			case DA_END:
+				baton->action = DA_NONE;
 				baton->m_End();
 				break;
 			default:

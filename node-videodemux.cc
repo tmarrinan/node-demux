@@ -95,8 +95,16 @@ NAN_METHOD(VideoDemux::StartDemuxing) {
 NAN_METHOD(VideoDemux::PauseDemuxing) {
 	NanScope();
 	
+	if(args.Length() < 1) {
+		NanThrowError("VideoDemux::PauseVideo - Wrong number of arguments");
+		NanReturnUndefined();
+	}
+	
+	NanCallback *callback = new NanCallback(args[0].As<Function>());
+	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
 	obj->baton->action = DA_PAUSE;
+	obj->baton->PauseCallback = callback;
 	
 	NanReturnUndefined();
 }
