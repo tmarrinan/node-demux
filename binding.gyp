@@ -6,6 +6,7 @@
         	"node-videodemux.cc",
         	"loadworker.cc",
         	"demuxworker.cc",
+        	"seekworker.cc",
         	"demuxbaton.cc",
         	"videoframe.cc"
         ],

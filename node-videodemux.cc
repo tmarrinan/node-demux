@@ -95,17 +95,52 @@ NAN_METHOD(VideoDemux::StartDemuxing) {
 NAN_METHOD(VideoDemux::PauseDemuxing) {
 	NanScope();
 	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->baton->action = DA_PAUSE;
+	
 	NanReturnUndefined();
 }
 
 NAN_METHOD(VideoDemux::StopDemuxing) {
 	NanScope();
 	
+	if(args.Length() < 1) {
+		NanThrowError("VideoDemux::StopVideo - Wrong number of arguments");
+		NanReturnUndefined();
+	}
+	
+	double timestamp = 0.0;
+	NanCallback *callback = new NanCallback(args[0].As<Function>());
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->baton->action = DA_SEEK;
+	obj->baton->seek_timestamp = timestamp;
+	obj->baton->SeekCallback = callback;
+	if(obj->baton->state == DS_IDLE) {
+		NanAsyncQueueWorker(new SeekWorker(obj->baton));
+	}
+	
 	NanReturnUndefined();
 }
 
 NAN_METHOD(VideoDemux::SeekVideo) {
 	NanScope();
+	
+	if(args.Length() < 2) {
+		NanThrowError("VideoDemux::SeekVideo - Wrong number of arguments");
+		NanReturnUndefined();
+	}
+	
+	double timestamp = args[0]->NumberValue();
+	NanCallback *callback = new NanCallback(args[1].As<Function>());
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	obj->baton->action = DA_SEEK;
+	obj->baton->seek_timestamp = timestamp;
+	obj->baton->SeekCallback = callback;
+	if(obj->baton->state == DS_IDLE) {
+		NanAsyncQueueWorker(new SeekWorker(obj->baton));
+	}
 	
 	NanReturnUndefined();
 }

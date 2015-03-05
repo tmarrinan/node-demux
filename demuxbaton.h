@@ -4,6 +4,7 @@
 extern "C" {
 	#include <libavcodec/avcodec.h>
 	#include <libavformat/avformat.h>
+	#include <libavutil/imgutils.h>
 }
 #include <string>
 #include <node.h>
@@ -29,6 +30,14 @@ class DemuxBaton {
 		void m_Start();
 		void m_End();
 		void m_Frame(VideoFrame *frm);
+		void m_Seek();
+		
+		// demux methods
+		void OpenVideoFile();
+		int OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
+		void DecodeFrame();
+		int DecodePacket(int *got_frame, int cached);
+		void Seek();
 		
 		// libav handles
 		AVFormatContext *fmt_ctx;
@@ -73,6 +82,10 @@ class DemuxBaton {
 		// video frame object
 		VideoFrame *frame_buffer;
 		
+		// variables for seeking video
+		double seek_timestamp;
+		NanCallback *SeekCallback;
+		
 		// js callback functions
 		bool def_err;
 		bool def_meta;
@@ -92,8 +105,8 @@ class DemuxBaton {
 		bool busy;
 		bool seek_when_ready;
 		//bool decode_first_frame;
-		double seek_timestamp;
-		v8::Persistent<v8::Function> callback;
+		//double seek_timestamp;
+		//v8::Persistent<v8::Function> callback;
 	
 		//double current_time;
 		//int64_t current_frame;

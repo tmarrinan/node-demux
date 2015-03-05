@@ -11,8 +11,13 @@ video.on('error', function(err) {
 });
 video.on('metadata', function(metadata) {
     console.log(metadata);
+	/*setTimeout(function() {
+		video.pause();
+	}, 1200);*/
 	setTimeout(function() {
-		video.play();
+		video.stop(function() {
+			console.log("seek finished");
+		});
 	}, 1500);
 });
 video.on('start', function() {
@@ -27,7 +32,10 @@ video.on('frame', function(frameIdx, data) {
 
 video.load(path.join(__dirname, "big-buck-bunny_trailer.mp4"), {decodeFirstFrame: true});
 // DON'T CALL `video.play()` UNTIL METADATA CALLBACK IS TRIGGERED
-
+video.seek(13.2, function() {
+	console.log("seek finished");
+	video.play();
+});
 
 
 

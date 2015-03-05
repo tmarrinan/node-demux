@@ -13,6 +13,7 @@ extern "C" {
 #include <node_buffer.h>
 #include "loadworker.h"
 #include "demuxworker.h"
+#include "seekworker.h"
 
 
 

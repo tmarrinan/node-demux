@@ -1,17 +1,12 @@
 #ifndef LOADWORKER_H
 #define LOADWORKER_H
 
-extern "C" {
-	#include <libavcodec/avcodec.h>
-	#include <libavformat/avformat.h>
-	#include <libavutil/imgutils.h>
-}
 #include <string>
-#include <vector>
 #include <node.h>
 #include <nan.h>
 #include "demuxbaton.h"
 #include "demuxworker.h"
+#include "seekworker.h"
 
 class LoadWorker : public NanAsyncWorker {
 	public:
@@ -21,9 +16,6 @@ class LoadWorker : public NanAsyncWorker {
 		
 		void Execute();
 		void HandleOKCallback();
-		
-		void OpenVideoFile();
-		int OpenCodecContext(int *stream_idx, AVFormatContext *fctx);
 		
 	private:
 		DemuxBaton *baton;
