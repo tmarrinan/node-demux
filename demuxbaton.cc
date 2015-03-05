@@ -63,8 +63,7 @@ void DemuxBaton::m_Start() {
 	NanScope();
 	
 	if (def_start) {
-		Local<Value> argv[1];
-		OnStart->Call(0, argv);
+		OnStart->Call(0, NULL);
 	}
 }
 
@@ -72,8 +71,7 @@ void DemuxBaton::m_End() {
 	NanScope();
 	
 	if (def_end) {
-		Local<Value> argv[1];
-		OnEnd->Call(0, argv);
+		OnEnd->Call(0, NULL);
 	}
 }
 
@@ -83,19 +81,8 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 	if (def_frame) {
 		uint32_t size = frm->getBufferSize();
 		const char *buf = reinterpret_cast<const char*>(frm->getBuffer());
-		int64_t frameIdx = frm->getFrameIndex();
-		
-		Local<Object> buffer;
-#if (NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION == 10)
-		node::Buffer *slowbuf = node::Buffer::New(size);
-		memcpy(node::Buffer::Data(slowbuf), buf, size);
-		Handle<Value> bufArgs[3] = { slowbuf->handle_, NanNew<Integer>(size), NanNew<Integer>(0) };
-		buffer = NodeBuffer->NewInstance(3, bufArgs);
-#else
-		buffer = NanNewBufferHandle(buf, size);
-#endif
-		
-		Local<Value> argv[2] = { NanNew<Number>(frameIdx), buffer };
+		int64_t frameIdx = frm->getFrameIndex();	
+		Local<Value> argv[2] = { NanNew<Number>(frameIdx), NanNewBufferHandle(buf, size) };
 		OnFrame->Call(2, argv);
 	}
 }
@@ -103,8 +90,7 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 void DemuxBaton::m_Pause() {
 	NanScope();
 	
-	Local<Value> argv[1];
-	PauseCallback->Call(0, argv);
+	PauseCallback->Call(0, NULL);
 	delete PauseCallback;
 	PauseCallback = NULL;
 }
@@ -112,8 +98,7 @@ void DemuxBaton::m_Pause() {
 void DemuxBaton::m_Seek() {
 	NanScope();
 	
-	Local<Value> argv[1];
-	SeekCallback->Call(0, argv);
+	SeekCallback->Call(0, NULL);
 	delete SeekCallback;
 	SeekCallback = NULL;
 }
@@ -159,9 +144,6 @@ void DemuxBaton::OpenVideoFile() {
     pkt.data = NULL;
 	pkt.size = 0;
 	
-	//paused = true;
-	//new_frame = false;
-	//cue_in_frame = -1;
 	current_frame= -1;
 	av_init_packet(&pkt);
 }
@@ -272,7 +254,6 @@ void DemuxBaton::Seek() {
 	do {
 		DecodeFrame();
 	} while(current_frame < frameNumber);
-	//btn->new_frame = true;
 }
 
 
