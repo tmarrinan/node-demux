@@ -80,7 +80,8 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 	
 	if (def_frame) {
 		uint32_t size = frm->getBufferSize();
-		const char *buf = reinterpret_cast<const char*>(frm->getBuffer());
+		char *buf = new char[size];
+		memcpy(buf, frm->getBuffer(), size);
 		int64_t frameIdx = frm->getFrameIndex();	
 		Local<Value> argv[2] = { NanNew<Number>(frameIdx), NanNewBufferHandle(buf, size) };
 		OnFrame->Call(2, argv);
