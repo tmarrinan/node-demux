@@ -43,8 +43,7 @@ void DemuxBaton::m_Error(std::string msg) {
 }
 
 void DemuxBaton::m_MetaData() {
-	//NanScope();
-	NanEscapableScope();
+	NanScope();
 	
 	if (def_meta) {			
 		Local<Object> meta = NanNew<Object>();
@@ -61,8 +60,7 @@ void DemuxBaton::m_MetaData() {
 }
 
 void DemuxBaton::m_Start() {
-	//NanScope();
-	NanEscapableScope();
+	NanScope();
 	
 	if (def_start) {
 		OnStart->Call(0, NULL);
@@ -70,8 +68,7 @@ void DemuxBaton::m_Start() {
 }
 
 void DemuxBaton::m_End() {
-	//NanScope();
-	NanEscapableScope();
+	NanScope();
 	
 	if (def_end) {
 		OnEnd->Call(0, NULL);
@@ -79,8 +76,7 @@ void DemuxBaton::m_End() {
 }
 
 void DemuxBaton::m_Frame(VideoFrame *frm) {
-	//NanScope();
-	NanEscapableScope();
+	NanScope();
 	
 	if (def_frame) {
 		uint32_t size = frm->getBufferSize();
@@ -92,8 +88,7 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 }
 
 void DemuxBaton::m_Pause() {
-	//NanScope();
-	NanEscapableScope();
+	NanScope();
 	
 	PauseCallback->Call(0, NULL);
 	delete PauseCallback;
@@ -101,8 +96,7 @@ void DemuxBaton::m_Pause() {
 }
 
 void DemuxBaton::m_Seek() {
-	//NanScope();
-	NanEscapableScope();
+	NanScope();
 	
 	SeekCallback->Call(0, NULL);
 	delete SeekCallback;
