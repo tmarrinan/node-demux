@@ -21,17 +21,22 @@ void DemuxWorker::HandleOKCallback() {
 				break;
 			case DA_PLAY:
 				if(continuous) {
+                    baton->state = DS_DEMUX;
 					uint64_t demux_curr = uv_now(uv_default_loop());
 					uint64_t video_curr = baton->current_frame * baton->frame_time * 1000.0;
 					int64_t diff = (video_curr - baton->video_start) - (demux_curr - baton->demux_start);
-					if (diff <= 0) NanAsyncQueueWorker(new DemuxWorker(baton, true));
-					else uv_timer_start(&baton->timerReq, uv_DemuxTimer, diff, 0);
-					baton->state = DS_DEMUX;
+                    if (diff <= 0) {
+                        NanAsyncQueueWorker(new DemuxWorker(baton, true));
+                    }
+					else {
+                        baton->m_Frame(baton->frame_buffer);
+                        uv_timer_start(&baton->timerReq, uv_DemuxTimer, diff, 0);
+                    }
 				}
 				else {
 					baton->action = DA_NONE;
+                    baton->m_Frame(baton->frame_buffer);
 				}
-				baton->m_Frame(baton->frame_buffer);
 				break;
 			case DA_PAUSE:
 				baton->action = DA_NONE;

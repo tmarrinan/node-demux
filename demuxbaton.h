@@ -101,9 +101,6 @@ class DemuxBaton {
 		NanCallback *OnStart;
 		NanCallback *OnEnd;
 		NanCallback *OnFrame;
-		
-		// NodeJS Buffer creator - version 0.10.X
-		v8::Persistent<v8::Function> NodeBuffer;
 };
 
 #endif // DEMUXBATON_H

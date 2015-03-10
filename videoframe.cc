@@ -13,7 +13,7 @@ VideoFrame::VideoFrame(uint8_t *b, uint32_t s, uint32_t f) {
 };
 		
 VideoFrame::~VideoFrame() {
-	if(buf) delete[] buf;
+	
 };
 uint8_t* VideoFrame::getBuffer() {
 	return buf;

@@ -22,10 +22,6 @@ DemuxBaton::DemuxBaton() {
 	
 	PauseCallback = NULL;
 	SeekCallback = NULL;
-	
-#if (NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION == 10)
-	NodeBuffer = Persistent<Function>::New(Handle<Function>::Cast(Context::GetCurrent()->Global()->Get(String::New("Buffer"))));
-#endif
 }
 
 DemuxBaton::~DemuxBaton() {
@@ -203,8 +199,6 @@ int DemuxBaton::DecodePacket(int *got_frame, int cached) {
 		ret = avcodec_decode_video2(video_dec_ctx, frame, got_frame, &pkt);
 		if(ret < 0) { error = "could not decode video frame"; return -1; }
 		if (*got_frame) {
-			//new_frame = true;
-			
 			if (frame->pkt_dts >= 0) {
 				current_time = (double)(frame->pkt_dts - video_stream->start_time) * video_time_base;
 				current_frame = (int64_t)(frame_rate * current_time + 0.5);
@@ -215,18 +209,17 @@ int DemuxBaton::DecodePacket(int *got_frame, int cached) {
 			}
 			
 			uint8_t *video_dst_data[4] = { NULL, NULL, NULL, NULL };
-			int video_dst_linesize[4];
+            int video_dst_linesize[4];
             ret = av_image_alloc(video_dst_data, video_dst_linesize, video_dec_ctx->width, video_dec_ctx->height, video_dec_ctx->pix_fmt, 1);
             if (ret < 0) { error = "could not allocate raw video buffer"; return -1; };
-			
 			av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, video_dec_ctx->pix_fmt, video_dec_ctx->width, video_dec_ctx->height);
             
 			uint8_t *old_buf = frame_buffer->getBuffer();
             if (old_buf) av_freep(&old_buf);
 			
 			frame_buffer->setBuffer(video_dst_data[0]);
-			frame_buffer->setBufferSize(ret);
-			frame_buffer->setFrameIndex(current_frame);
+            frame_buffer->setBufferSize(ret);
+            frame_buffer->setFrameIndex(current_frame);
 		}
     }
     return decoded;
