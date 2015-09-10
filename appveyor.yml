@@ -1,0 +1,78 @@
+version: 1.0.{build}
+
+branches:
+  only:
+  - master
+
+configuration: Release
+platform: x64
+clone_depth: 1
+
+init:
+- curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-20150806-git-9c0407e-win64-dev.7z
+- 7z x ffmpeg-20150806-git-9c0407e-win64-dev.7z -o.
+- mkdir C:\Dev\
+- mkdir C:\Dev\ffmpeg-win64-dev
+- move ffmpeg-20150806-git-9c0407e-win64-dev\lib C:\Dev\ffmpeg-win64-dev
+- move ffmpeg-20150806-git-9c0407e-win64-dev\include C:\Dev\ffmpeg-win64-dev
+- del /Q *.7z
+- rmdir /Q /S ffmpeg-20150806-git-9c0407e-win64-dev
+- dir C:\Dev
+- dir C:\Dev\ffmpeg-win64-dev\include
+- dir C:\Dev\ffmpeg-win64-dev\lib
+
+environment:
+  matrix:
+  - nodejs_version: 0.12.7
+  - nodejs_version: 4.0.0
+
+install:
+- ps: >-
+    Install-Product node $env:nodejs_version x64
+
+    npm -v
+
+    node -v
+
+    npm install --production --msvs_version=2013
+
+build:
+  parallel: true
+  verbosity: minimal
+
+after_build:
+- curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/shared/ffmpeg-20150806-git-9c0407e-win64-shared.7z
+- 7z x ffmpeg-20150806-git-9c0407e-win64-shared.7z -o.
+- move ffmpeg-20150806-git-9c0407e-win64-shared\bin\* build\Release
+- rmdir /Q /S ffmpeg-20150806-git-9c0407e-win64-shared
+- del /Q *.7z
+- rmdir /Q /S .git
+- 7z a -tzip node-demux_win_%nodejs_version%.zip c:\projects\node-demux\
+
+test: off
+
+artifacts:
+- path: node-demux_win_$(nodejs_version).zip
+  name: node-demux-win64
+
+deploy:
+- provider: FTP
+  host: ftp.sagecommons.org
+  protocol: ftp
+  username: upload@sagecommons.org
+  password:
+    secure: L4I4NkKN7mrQww7GgwPLrA==
+  folder: /
+  artifact: node-demux-win64
+
+after_deploy:
+- dir
+
+notifications:
+- provider: Slack
+  auth_token:
+    secure: zWPzLLrh/2HV3lXJd9q5XK+m2D1zn/bWBIQOzjQ2QkFSFL3ijB839EMqTRUrYZeA
+  channel: appveyor
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: true
