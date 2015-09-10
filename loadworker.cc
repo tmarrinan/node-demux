@@ -8,7 +8,7 @@ void LoadWorker::Execute() {
 }
 
 void LoadWorker::HandleOKCallback() {
-	NanScope();
+	Nan::HandleScope();
 	
 	if(baton->error != "") {
 		baton->m_Error(baton->error);
@@ -20,21 +20,21 @@ void LoadWorker::HandleOKCallback() {
 			case DA_LOAD:
 				baton->action = DA_NONE;
 				if(baton->decode_first_frame) {
-					NanAsyncQueueWorker(new DemuxWorker(baton, false));
+					Nan::AsyncQueueWorker(new DemuxWorker(baton, false));
 				}
 				break;
 			case DA_PLAY:
 				baton->demux_start = uv_now(uv_default_loop());
 				baton->video_start = baton->current_frame * baton->frame_time * 1000.0;
 				baton->m_Start();
-				NanAsyncQueueWorker(new DemuxWorker(baton, true));
+				Nan::AsyncQueueWorker(new DemuxWorker(baton, true));
 				break;
 			case DA_PAUSE:
 				baton->action = DA_NONE;
 				baton->m_Pause();
 				break;
 			case DA_SEEK:
-				NanAsyncQueueWorker(new SeekWorker(baton));
+				Nan::AsyncQueueWorker(new SeekWorker(baton));
 				break;
 			case DA_END:
 				baton->action = DA_NONE;

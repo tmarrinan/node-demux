@@ -6,7 +6,7 @@ void DemuxWorker::Execute() {
 }
 
 void DemuxWorker::HandleOKCallback() {
-	NanScope();
+	Nan::HandleScope();
 	
 	if(baton->error != "") {
 		baton->m_Error(baton->error);
@@ -26,7 +26,7 @@ void DemuxWorker::HandleOKCallback() {
 					uint64_t video_curr = baton->current_frame * baton->frame_time * 1000.0;
 					int64_t diff = (video_curr - baton->video_start) - (demux_curr - baton->demux_start);
                     if (diff <= 0) {
-                        NanAsyncQueueWorker(new DemuxWorker(baton, true));
+                        Nan::AsyncQueueWorker(new DemuxWorker(baton, true));
                     }
 					else {
                         baton->m_Frame(baton->frame_buffer);
@@ -45,7 +45,7 @@ void DemuxWorker::HandleOKCallback() {
 				break;
 			case DA_SEEK:
 				baton->m_Frame(baton->frame_buffer);
-				NanAsyncQueueWorker(new SeekWorker(baton));
+				Nan::AsyncQueueWorker(new SeekWorker(baton));
 				break;
 			case DA_END:
 				baton->action = DA_NONE;
@@ -60,11 +60,11 @@ void DemuxWorker::HandleOKCallback() {
 void DemuxWorker::uv_DemuxTimer(uv_timer_t *req, int status) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
-	NanAsyncQueueWorker(new DemuxWorker(btn, true));
+	Nan::AsyncQueueWorker(new DemuxWorker(btn, true));
 }
 
 void DemuxWorker::uv_DemuxTimer(uv_timer_t *req) {
 	DemuxBaton *btn = static_cast<DemuxBaton *>(req->data);
 	
-	NanAsyncQueueWorker(new DemuxWorker(btn, true));
+	Nan::AsyncQueueWorker(new DemuxWorker(btn, true));
 }

@@ -85,10 +85,10 @@ class DemuxBaton {
 		
 		// variables for seeking video
 		double seek_timestamp;
-		NanCallback *SeekCallback;
+		Nan::Callback *SeekCallback;
 		
 		// variables for pausing video
-		NanCallback *PauseCallback;
+		Nan::Callback *PauseCallback;
 		
 		// js callback functions
 		bool def_err;
@@ -96,11 +96,11 @@ class DemuxBaton {
 		bool def_start;
 		bool def_end;
 		bool def_frame;
-		NanCallback *OnError;
-		NanCallback *OnMetaData;
-		NanCallback *OnStart;
-		NanCallback *OnEnd;
-		NanCallback *OnFrame;
+		Nan::Callback *OnError;
+		Nan::Callback *OnMetaData;
+		Nan::Callback *OnStart;
+		Nan::Callback *OnEnd;
+		Nan::Callback *OnFrame;
 };
 
 #endif // DEMUXBATON_H

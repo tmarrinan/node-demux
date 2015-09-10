@@ -8,10 +8,10 @@
 #include "demuxworker.h"
 #include "seekworker.h"
 
-class LoadWorker : public NanAsyncWorker {
+class LoadWorker : public Nan::AsyncWorker {
 	public:
 		LoadWorker(DemuxBaton *btn, std::string fn, bool dff)
-			: NanAsyncWorker(NULL), baton(btn), filename(fn), decodeFirstFrame(dff) {};
+			: Nan::AsyncWorker(NULL), baton(btn), filename(fn), decodeFirstFrame(dff) {};
 		~LoadWorker() {};
 		
 		void Execute();

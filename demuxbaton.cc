@@ -30,33 +30,33 @@ DemuxBaton::~DemuxBaton() {
 
 
 void DemuxBaton::m_Error(std::string msg) {
-	NanScope();
+	Nan::HandleScope();
 
 	if (def_err) {
-		Local<Value> argv[1] = { NanNew<String>(msg.c_str()) };
+		Local<Value> argv[1] = { Nan::New<String>(msg.c_str()).ToLocalChecked() };
 		OnError->Call(1, argv);
 	}
 }
 
 void DemuxBaton::m_MetaData() {
-	NanScope();
+	Nan::HandleScope();
 	
 	if (def_meta) {			
-		Local<Object> meta = NanNew<Object>();
-		meta->Set(NanNew<String>("width"),                NanNew<Number>(width));
-		meta->Set(NanNew<String>("height"),               NanNew<Number>(height));
-		meta->Set(NanNew<String>("display_aspect_ratio"), NanNew<Number>(display_aspect_ratio));
-		meta->Set(NanNew<String>("num_frames"),           NanNew<Number>(num_frames));
-		meta->Set(NanNew<String>("frame_rate"),           NanNew<Number>(frame_rate));
-		meta->Set(NanNew<String>("duration"),             NanNew<Number>(duration));
-		meta->Set(NanNew<String>("pixel_format"),         NanNew<String>(format.c_str()));
+		Local<Object> meta = Nan::New<Object>();
+		meta->Set(Nan::New<String>("width").ToLocalChecked(),                Nan::New<Number>(width));
+		meta->Set(Nan::New<String>("height").ToLocalChecked(),               Nan::New<Number>(height));
+		meta->Set(Nan::New<String>("display_aspect_ratio").ToLocalChecked(), Nan::New<Number>(display_aspect_ratio));
+		meta->Set(Nan::New<String>("num_frames").ToLocalChecked(),           Nan::New<Number>(num_frames));
+		meta->Set(Nan::New<String>("frame_rate").ToLocalChecked(),           Nan::New<Number>(frame_rate));
+		meta->Set(Nan::New<String>("duration").ToLocalChecked(),             Nan::New<Number>(duration));
+		meta->Set(Nan::New<String>("pixel_format").ToLocalChecked(),         Nan::New<String>(format.c_str()).ToLocalChecked());
 		Local<Value> argv[1] = {meta};
 		OnMetaData->Call(1, argv);
 	}
 }
 
 void DemuxBaton::m_Start() {
-	NanScope();
+	Nan::HandleScope();
 	
 	if (def_start) {
 		OnStart->Call(0, NULL);
@@ -64,7 +64,7 @@ void DemuxBaton::m_Start() {
 }
 
 void DemuxBaton::m_End() {
-	NanScope();
+	Nan::HandleScope();
 	
 	if (def_end) {
 		OnEnd->Call(0, NULL);
@@ -72,19 +72,19 @@ void DemuxBaton::m_End() {
 }
 
 void DemuxBaton::m_Frame(VideoFrame *frm) {
-	NanScope();
+	Nan::HandleScope();
 	
 	if (def_frame) {
 		uint32_t size = frm->getBufferSize();
-		const char *buf = reinterpret_cast<const char*>(frm->getBuffer());
+		char *buf = reinterpret_cast<char*>(frm->getBuffer());
 		int64_t frameIdx = frm->getFrameIndex();	
-		Local<Value> argv[2] = { NanNew<Number>(frameIdx), NanNewBufferHandle(buf, size) };
+		Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::NewBuffer(buf, size).ToLocalChecked() };
 		OnFrame->Call(2, argv);
 	}
 }
 
 void DemuxBaton::m_Pause() {
-	NanScope();
+	Nan::HandleScope();
 	
 	PauseCallback->Call(0, NULL);
 	delete PauseCallback;
@@ -92,7 +92,7 @@ void DemuxBaton::m_Pause() {
 }
 
 void DemuxBaton::m_Seek() {
-	NanScope();
+	Nan::HandleScope();
 	
 	SeekCallback->Call(0, NULL);
 	delete SeekCallback;

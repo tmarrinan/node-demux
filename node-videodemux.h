@@ -19,7 +19,7 @@ extern "C" {
 
 class VideoDemux : public node::ObjectWrap {
 	public:
-		static void Init(v8::Handle<v8::Object> exports);
+		static NAN_MODULE_INIT(Init);
 	
 	private:
 		explicit VideoDemux();

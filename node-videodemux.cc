@@ -14,160 +14,160 @@ VideoDemux::~VideoDemux() {
 
 }
 
-void VideoDemux::Init(Handle<Object> exports) {
-	NanScope();
+NAN_MODULE_INIT(VideoDemux::Init) {
+	Nan::HandleScope();
 	
 	// Prepare constructor template
-	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(VideoDemux::New);
-	tpl->SetClassName(NanNew("VideoDemux"));
+	Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(VideoDemux::New);
+	tpl->SetClassName(Nan::New<String>("VideoDemux").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 	// Prototype
-	NODE_SET_PROTOTYPE_METHOD(tpl, "LoadVideo",     LoadVideo);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "StartDemuxing", StartDemuxing);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "PauseDemuxing", PauseDemuxing);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "StopDemuxing",  StopDemuxing);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "SeekVideo",     SeekVideo);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "On",            On);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "IsBusy",        IsBusy);
+	Nan::SetPrototypeMethod(tpl, "LoadVideo",     LoadVideo);
+	Nan::SetPrototypeMethod(tpl, "StartDemuxing", StartDemuxing);
+	Nan::SetPrototypeMethod(tpl, "PauseDemuxing", PauseDemuxing);
+	Nan::SetPrototypeMethod(tpl, "StopDemuxing",  StopDemuxing);
+	Nan::SetPrototypeMethod(tpl, "SeekVideo",     SeekVideo);
+	Nan::SetPrototypeMethod(tpl, "On",            On);
+	Nan::SetPrototypeMethod(tpl, "IsBusy",        IsBusy);
 	
-	exports->Set(NanNew<String>("VideoDemux"), tpl->GetFunction());
-	NanAssignPersistent(constructor, tpl);
+	//constructor.Reset(tpl->GetFunction());
+	Nan::Set(target, Nan::New<String>("VideoDemux").ToLocalChecked(), tpl->GetFunction());
 }
 
 
 /**********************************************************************************/
 NAN_METHOD(VideoDemux::New) {
-	NanScope();
+	Nan::HandleScope();
 
-	if (!args.IsConstructCall()) {
-		NanThrowError("VideoDemux::New - Cannot call constructor as function, you need to use 'new' keyword");
-		NanReturnUndefined();
+	if (!info.IsConstructCall()) {
+		Nan::ThrowError("VideoDemux::New - Cannot call constructor as function, you need to use 'new' keyword");
+		info.GetReturnValue().Set(Nan::Undefined());
 	}
 	else {
 		// Invoked as constructor: `new VideoDemux(...)`
 		VideoDemux *obj = new VideoDemux();
-		obj->Wrap(args.This());
-		NanReturnValue(args.This());
+		obj->Wrap(info.This());
+		info.GetReturnValue().Set(info.This());
 	}
 }
 
 NAN_METHOD(VideoDemux::LoadVideo) {
-	NanScope();
+	Nan::HandleScope();
 	
-	if (args.Length() < 1) {
-		NanThrowError("VideoDemux::LoadVideo - Wrong number of arguments");
-		NanReturnUndefined();
+	if (info.Length() < 1) {
+		Nan::ThrowError("VideoDemux::LoadVideo - Wrong number of arguments");
+		info.GetReturnValue().Set(Nan::Undefined());
 	}
 	
 	bool dff = false;
-	if (args.Length() >= 2) {
-		Local<Object> obj = args[1]->ToObject();
-		if (obj->Has(NanNew<String>("decodeFirstFrame"))) {
-			dff = obj->Get(NanNew<String>("decodeFirstFrame"))->BooleanValue();
+	if (info.Length() >= 2) {
+		Local<Object> obj = info[1]->ToObject();
+		if (obj->Has(Nan::New<String>("decodeFirstFrame").ToLocalChecked())) {
+			dff = obj->Get(Nan::New<String>("decodeFirstFrame").ToLocalChecked())->BooleanValue();
 		}
 	}
 	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
 	obj->baton->action = DA_LOAD;
 	if(obj->baton->state == DS_IDLE) {
         obj->baton->state = DS_LOAD;
-		NanAsyncQueueWorker(new LoadWorker(obj->baton, *NanUtf8String(args[0]), dff));
+		Nan::AsyncQueueWorker(new LoadWorker(obj->baton, *Nan::Utf8String(info[0]), dff));
 	}
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(VideoDemux::StartDemuxing) {
-	NanScope();
+	Nan::HandleScope();
 	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
 	obj->baton->action = DA_PLAY;
 	if(obj->baton->state == DS_IDLE) {
         obj->baton->state = DS_DEMUX;
 		obj->baton->demux_start = uv_now(uv_default_loop());
 		obj->baton->video_start = obj->baton->current_frame * obj->baton->frame_time * 1000.0;
 		obj->baton->m_Start();
-		NanAsyncQueueWorker(new DemuxWorker(obj->baton, true));
+		Nan::AsyncQueueWorker(new DemuxWorker(obj->baton, true));
 	}
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(VideoDemux::PauseDemuxing) {
-	NanScope();
+	Nan::HandleScope();
 	
-	if(args.Length() < 1) {
-		NanThrowError("VideoDemux::PauseVideo - Wrong number of arguments");
-		NanReturnUndefined();
+	if(info.Length() < 1) {
+		Nan::ThrowError("VideoDemux::PauseVideo - Wrong number of arguments");
+		info.GetReturnValue().Set(Nan::Undefined());
 	}
 	
-	NanCallback *callback = new NanCallback(args[0].As<Function>());
+	Nan::Callback *callback = new Nan::Callback(info[0].As<Function>());
 	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
 	obj->baton->action = DA_PAUSE;
 	obj->baton->PauseCallback = callback;
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(VideoDemux::StopDemuxing) {
-	NanScope();
+	Nan::HandleScope();
 	
-	if(args.Length() < 1) {
-		NanThrowError("VideoDemux::StopVideo - Wrong number of arguments");
-		NanReturnUndefined();
+	if(info.Length() < 1) {
+		Nan::ThrowError("VideoDemux::StopVideo - Wrong number of arguments");
+		info.GetReturnValue().Set(Nan::Undefined());
 	}
 	
 	double timestamp = 0.0;
-	NanCallback *callback = new NanCallback(args[0].As<Function>());
+	Nan::Callback *callback = new Nan::Callback(info[0].As<Function>());
 	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
 	obj->baton->action = DA_SEEK;
 	obj->baton->seek_timestamp = timestamp;
 	obj->baton->SeekCallback = callback;
 	if(obj->baton->state == DS_IDLE) {
         obj->baton->state = DS_SEEK;
-		NanAsyncQueueWorker(new SeekWorker(obj->baton));
+		Nan::AsyncQueueWorker(new SeekWorker(obj->baton));
 	}
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(VideoDemux::SeekVideo) {
-	NanScope();
+	Nan::HandleScope();
 	
-	if(args.Length() < 2) {
-		NanThrowError("VideoDemux::SeekVideo - Wrong number of arguments");
-		NanReturnUndefined();
+	if(info.Length() < 2) {
+		Nan::ThrowError("VideoDemux::SeekVideo - Wrong number of arguments");
+		info.GetReturnValue().Set(Nan::Undefined());
 	}
 	
-	double timestamp = args[0]->NumberValue();
-	NanCallback *callback = new NanCallback(args[1].As<Function>());
+	double timestamp = info[0]->NumberValue();
+	Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
 	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
 	obj->baton->action = DA_SEEK;
 	obj->baton->seek_timestamp = timestamp;
 	obj->baton->SeekCallback = callback;
 	if(obj->baton->state == DS_IDLE) {
         obj->baton->state = DS_SEEK;
-		NanAsyncQueueWorker(new SeekWorker(obj->baton));
+		Nan::AsyncQueueWorker(new SeekWorker(obj->baton));
 	}
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(VideoDemux::On) {
-	NanScope();
+	Nan::HandleScope();
 	
-	if(args.Length() < 2) {
-		NanThrowError("VideoDemux::On - Wrong number of arguments");
-		NanReturnUndefined();
+	if(info.Length() < 2) {
+		Nan::ThrowError("VideoDemux::On - Wrong number of arguments");
+		info.GetReturnValue().Set(Nan::Undefined());
 	}
 	
-	std::string type = *NanUtf8String(args[0]);
-	NanCallback *callback = new NanCallback(args[1].As<Function>());
+	std::string type = *Nan::Utf8String(info[0]);
+	Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
 	
-	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(args.This());
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
 	if (type == "error") {
 		obj->baton->def_err = true;
 		obj->baton->OnError = callback;
@@ -189,11 +189,11 @@ NAN_METHOD(VideoDemux::On) {
 		obj->baton->OnFrame = callback;
 	}
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(VideoDemux::IsBusy) {
-	NanScope();
+	Nan::HandleScope();
 	
-	NanReturnUndefined();
+	info.GetReturnValue().Set(Nan::Undefined());
 }	

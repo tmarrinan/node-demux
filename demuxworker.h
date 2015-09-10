@@ -6,10 +6,10 @@
 #include "demuxbaton.h"
 #include "seekworker.h"
 
-class DemuxWorker : public NanAsyncWorker {
+class DemuxWorker : public Nan::AsyncWorker {
 	public:
 		DemuxWorker(DemuxBaton *btn, bool cont)
-			: NanAsyncWorker(NULL), baton(btn), continuous(cont) {};
+			: Nan::AsyncWorker(NULL), baton(btn), continuous(cont) {};
 		~DemuxWorker() {};
 		
 		void Execute();
