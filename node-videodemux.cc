@@ -165,6 +165,7 @@ NAN_METHOD(VideoDemux::On) {
 	}
 	
 	std::string type = *Nan::Utf8String(info[0]);
+	//Nan::Persistent<Function> callback(info[1].As<Function>());
 	Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
 	
 	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());

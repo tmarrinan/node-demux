@@ -76,9 +76,9 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 	
 	if (def_frame) {
 		uint32_t size = frm->getBufferSize();
-		char *buf = reinterpret_cast<char*>(frm->getBuffer());
-		int64_t frameIdx = frm->getFrameIndex();	
-		Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::NewBuffer(buf, size).ToLocalChecked() };
+		const char *buf = reinterpret_cast<const char*>(frm->getBuffer());
+		int64_t frameIdx = frm->getFrameIndex();
+		Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::CopyBuffer(buf, size).ToLocalChecked() };
 		OnFrame->Call(2, argv);
 	}
 }
