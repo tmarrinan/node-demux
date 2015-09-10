@@ -1,6 +1,6 @@
 {
   "name": "node-demux",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Video Demuxer",
   "main": "index.js",
   "repository": {
