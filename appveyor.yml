@@ -61,7 +61,7 @@ deploy:
   protocol: ftp
   username: upload@sagecommons.org
   password:
-    secure: L4I4NkKN7mrQww7GgwPLrA==
+    secure: nJ5DR4tXepEgiOsXpf4omw==
   folder: /
   artifact: node-demux-win64
 
