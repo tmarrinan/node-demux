@@ -1,8 +1,5 @@
 os: osx
 
-git:
-  depth: 5
-
 env:
   global:
     - FTP_USER="upload@sagecommons.org"
@@ -26,6 +23,6 @@ install:
   - npm install
 
 after_success:
-    "tar czvf node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz ."
-    "curl --ftp-create-dirs -T node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz"
+    "tar czvf node-demux_mac_$NODE_VERSION.tar.gz ."
+    "curl --ftp-create-dirs -T node-demux_mac_$NODE_VERSION.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_$NODE_VERSION.tar.gz"
 
