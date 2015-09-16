@@ -1,6 +1,9 @@
 os: osx
 language: node_js
 node_js:
-  - "0.10"
-  - "0.12"
-  - "4.0"
+  - "0.10.36"
+  - "0.12.7"
+  - "4.0.0"
+before_install:
+  - brew update
+  - brew install ffmpeg --with-libvpx --with-libvorbis
