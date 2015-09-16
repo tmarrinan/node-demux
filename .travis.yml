@@ -24,3 +24,7 @@ install:
   - npm -v 
   - npm install
 
+script:
+  - tar czvf node-demux_mac_${NODE_VERSION}.tar.gz .
+  - ls
+
