@@ -125,10 +125,10 @@ void DemuxBaton::OpenVideoFile() {
 	if(display_aspect_ratio <= 0) display_aspect_ratio = (double)width / (double)height;
 	if(num_frames <= 0) num_frames = (int64_t)floor((duration * frame_rate) + 0.5);
 	
-	if      (video_dec_ctx->pix_fmt == PIX_FMT_YUV420P) format = "yuv420p";
-	else if (video_dec_ctx->pix_fmt == PIX_FMT_RGB24)   format = "rgb24";
-	else if (video_dec_ctx->pix_fmt == PIX_FMT_RGB32)   format = "rgb32";
-	else                                                       format = "unknown";
+	if      (video_dec_ctx->pix_fmt == AV_PIX_FMT_YUV420P) format = "yuv420p";
+	else if (video_dec_ctx->pix_fmt == AV_PIX_FMT_RGB24)   format = "rgb24";
+	else if (video_dec_ctx->pix_fmt == AV_PIX_FMT_RGB32)   format = "rgb32";
+	else                                                   format = "unknown";
 
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55,28,1)	
 	frame = av_frame_alloc();
