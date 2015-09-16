@@ -26,7 +26,6 @@ script:
   - tar czf /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz .
   - mv /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz .
   - ls -a
-  - ls -a /Users/travis/build/tmarrinan/Build
 
 deploy:
   provider: releases
