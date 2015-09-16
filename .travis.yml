@@ -3,9 +3,6 @@ os: osx
 language: objective-c
 
 env:
-  global:
-    - "FTP_USER=upload@sagecommons.org"
-    - secure: "iYSHQw2b2M6JTQvCtdidz0t9NjN7yhf82ILifzBTrq8KJBfqnKNkGxTRuaztML5zbtV4bXhhSQLBcA1VX1wGJzNU60jlsAzWVNrReqWJEwip6wsyFRUu6xRarpi38FwNt9RAReRPsAPHpyBJyEzifDgd4ZnV9I9GMgLJ/DKakFeBQKM/1bK+iq4ZrPHeFTW7hJKcQGKW8Gt7xlm2d1griDJaXy5XVK71Zk3WJNCekWqvRDvQzF/aj+3sqZ7N+BAQd6qRL+KuweuYZHqJJ/855HlPMZyIklx+YP1GUgMYvYOk1uV2q4zzIxeS2LHmArzeiD1jFVsGCnP69eBqYlyei59y2oCmy75fLNfycCtZrDe2Wo/v0UeCjsDor/r92NinlmjHYjA0oS2iBuEDRNY4UPNhHUU1zNHIxD62OWCwWZVBzMk5M33jUP4xTrCp+AXqhmB7L4g/M00uBAaIXXDAY3NPdWHw77tWDVpuDpCd4xQpjLIG48meWYH3qkweOhjvz6N7tU1s481fY8s0rVTKwmLvuRMJrfW8S067n9aK96Fr8N16/3s/1lE7GnyVtwa+AHZe2dvbB1sneATO++VnbjkpW5tfLbRtvY3owUL33bQAhq76kiMcH1uj5/yJ1wBLrp3vKT+sPj0NrZRCnmusK/PHfIVNovGIYFTdHXlnyWQ="
   matrix:
     - NODE_VERSION="0.10.36"
     - NODE_VERSION="0.12.7"
@@ -21,7 +18,7 @@ install:
   - source ~/.nvm/nvm.sh
   - nvm install $NODE_VERSION
   - node -v
-  - npm -v 
+  - npm -v
   - npm install
 
 script:
@@ -31,7 +28,10 @@ script:
   - ls -a
   - ls -a /Users/travis/build/tmarrinan/Build
 
-
-after_success:
-    "curl --ftp-create-dirs -T node-demux_mac_${NODE_VERSION}.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_${NODE_VERSION}.tar.gz"
-
+deploy:
+  provider: releases
+  api_key:
+    secure: RaPCJDCKkk/ff5tvmBG0TcKFMTWsU7ENFPUq6r+FnjYKvmef+PXtIs6YoraywdYj13BMAbssIk2671mpmX1VPjD/ub0+pgndL1zetidaSmZtL79c8/Y+KrbqG3lSxg9ONjOUt9E2w8fRKWTqrAe8dDnSHd4quVCOHmbPr2xMjBi71JPOan7iv27Pde9ISzwNFiQ/5iIIYm8WRjf26T0AZ07ydR1jEKzV+VH728LzUXKz0p0xzElqaQp/uE6kCMmr6KUif3H+Hq/4S5borDvhvHHSWyu6GSibWD47BwtEoKJPY1bb1E15h5ETW6hOKqaJ8l4Y3GC3v01f0ly4cPeCB9o5kry61bmNqPLfnb4j8/syKUEH5q7Bih0K7xfd8/b+xgmfw6noOOWGSYfhkM5gewqnXq6Jd+HbaCL8OpOiMTyIn72Iz+N9Zv8z7wEX5qsWQMCqzaIoQNnTBWk6p3lGF0jcYJ9fo6M/VSFqRp0EH8KaF6+5QZZ81ARQoNn1/vfxrvTINtcEjEsxWaiV+OuG2/uzLh7NCzWWTlwBQ3Urme9egD8IaaixpZZ59YUgiFZ8OklRXS4lFKnayKQUU1aRM+ekOwJDDScKGBlT26R35OY60b488mzhbWlBP+Dnz+SzJ7XBarXvjBgPoeE5C6zy2XRVYhinrJIe5CV5B9FMCl4=
+  file: node-demux-mac_$NODE_VERSION.tar.gz
+  on:
+    repo: tmarrinan/node-demux
