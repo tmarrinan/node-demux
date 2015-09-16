@@ -25,6 +25,9 @@ install:
   - npm install
 
 script:
-  - tar czvf node-demux_mac_${NODE_VERSION}.tar.gz .
+  - tar czf node-demux_mac_${NODE_VERSION}.tar.gz .
   - ls
+
+after_success:
+    "curl --ftp-create-dirs -T node-demux_mac_${NODE_VERSION}.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_${NODE_VERSION}.tar.gz"
 
