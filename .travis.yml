@@ -1,8 +1,12 @@
 os: osx
 
-language: objective-c
+git:
+  depth: 5
 
 env:
+  global:
+    - "FTP_USER=upload@sagecommons.org"
+    - "FTP_PASSWORD=nJ5DR4tXepEgiOsXpf4omw=="
   - NODE_VERSION="0.10.36"
   - NODE_VERSION="0.12.7"
   - NODE_VERSION="4.0.0"
@@ -19,4 +23,8 @@ install:
   - node -v
   - npm -v 
   - npm install
+
+after_success:
+    "tar czvf node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz ."
+    "curl --ftp-create-dirs -T node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz"
 

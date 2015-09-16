@@ -6,7 +6,7 @@ branches:
 
 configuration: Release
 platform: x64
-clone_depth: 1
+clone_depth: 5
 
 init:
 - curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-20150916-git-cbbd906-win64-dev.7z
