@@ -35,4 +35,7 @@ deploy:
   file: node-demux-mac_$(NODE_VERSION).tar.gz
   skip_cleanup: true
   on:
+    repo: tmarrinan/node-demux
     tag: true
+    branch: master
+

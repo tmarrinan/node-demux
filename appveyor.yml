@@ -22,9 +22,8 @@ init:
 - dir C:\Dev\ffmpeg-win64-dev\lib
 
 environment:
-  global:
-  - my_variable:
-      secure: /975A5J1RV6XLgHNZnUkcaSwNYlEjiZaDECRyXFaEQnUyYOKWHizDCmchvNd8UaU
+  GITHUB_API:
+    secure: /975A5J1RV6XLgHNZnUkcaSwNYlEjiZaDECRyXFaEQnUyYOKWHizDCmchvNd8UaU
   matrix:
   - nodejs_version: 0.10.36
   - nodejs_version: 0.12.7
