@@ -1,7 +1,5 @@
 os: osx
 
-language: cpp
-
 env:
   - NODE_VERSION="0.10.36"
   - NODE_VERSION="0.12.7"
