@@ -62,14 +62,16 @@ artifacts:
   name: node-demux-win64
 
 deploy:
-- provider: FTP
-  host: ftp.sagecommons.org
-  protocol: ftp
-  username: upload@sagecommons.org
-  password:
-    secure: nJ5DR4tXepEgiOsXpf4omw==
-  folder: /
+  provider: GitHub
+  description: 'Windows Binary Release'
+  auth_token:
+    secure: /975A5J1RV6XLgHNZnUkcaSwNYlEjiZaDECRyXFaEQnUyYOKWHizDCmchvNd8UaU
   artifact: node-demux-win64
+  draft: false
+  prerelease: false
+  on:
+    branch: master
+    appveyor_repo_tag: true
 
 after_deploy:
 - dir
