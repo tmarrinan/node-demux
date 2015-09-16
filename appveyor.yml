@@ -48,7 +48,7 @@ after_build:
 - rmdir /Q /S ffmpeg-20150916-git-cbbd906-win64-shared
 - del /Q *.7z
 - rmdir /Q /S .git
-- 7z a -ttar -so node-demux_win_%nodejs_version%.tar C:\projects\node-demux\ | 7z a -si node-demux_win_%nodejs_version%.tar.gz
+- 7z a -ttar -so node-demux_win_%nodejs_version%.tar C:\projects\node-demux\ -ssw | 7z a -si node-demux_win_%nodejs_version%.tar.gz -ssw
 
 test: off
 

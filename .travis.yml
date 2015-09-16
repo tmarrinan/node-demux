@@ -5,7 +5,7 @@ language: objective-c
 env:
   global:
     - "FTP_USER=upload@sagecommons.org"
-    - secure: "g5jlEjKUAStB25lyMCTJCCzWqwvLR4Y+NC9lQ9/MBxJ9iuTdWdoOwqk5dp785YsKP550TUjHTkvvh/K1EpBe/RKiruWWA6/hMZq5jT9a46oJ+gdG4g5Gb5udOBDo1umbnc8FeMW5mtolgcJqfV+2ViyfU+yiWhdFQyUFULFdIg90yBQrPZoDgd5wELFkE6IfgH9jbpbbruvqYgVGMb8j9Dz4ClPmZEYeMIbXSP5eaVc4y1+K7HMBkWbAV2u2RjLWgIjcbdFLXjocmGpASJ30dxqhT/C4Gj3s7xArQkihZytMI/wJHOKhjzGxOlBpBzjtRJsQt+As+gRacoqGWAaRIOGe/c4OnSsmkLIu1DwdemeLTRSxVI8qi/Cd9p0w6gWie71aOvp/70Q3f3FZyfAFIhj8EnD/317FfgrIkj75Uk7QyekfCv4azQEiU9FU3gT+60zPmd29KY9undZFGpRrPr10YuAhxB48qRQg53YJ10nSI9FhJu6jYWsFpujuXaxKT9UWTUa2MwtLT4pcKgQPAIrtr4Ozbv7OIltVqFXuACtQJXcLNkmUAiSUgBi2FzncQVrsofCIeEzonKcTdZps56FP/WK2bwmGAZk9R/r3Y9YIN7RCmY4PGJwpm+Ub2imKPK+kNahmeCTW5N+6dFYGgrqLNLFBE889woymSUCcKjw="
+    - secure: "iYSHQw2b2M6JTQvCtdidz0t9NjN7yhf82ILifzBTrq8KJBfqnKNkGxTRuaztML5zbtV4bXhhSQLBcA1VX1wGJzNU60jlsAzWVNrReqWJEwip6wsyFRUu6xRarpi38FwNt9RAReRPsAPHpyBJyEzifDgd4ZnV9I9GMgLJ/DKakFeBQKM/1bK+iq4ZrPHeFTW7hJKcQGKW8Gt7xlm2d1griDJaXy5XVK71Zk3WJNCekWqvRDvQzF/aj+3sqZ7N+BAQd6qRL+KuweuYZHqJJ/855HlPMZyIklx+YP1GUgMYvYOk1uV2q4zzIxeS2LHmArzeiD1jFVsGCnP69eBqYlyei59y2oCmy75fLNfycCtZrDe2Wo/v0UeCjsDor/r92NinlmjHYjA0oS2iBuEDRNY4UPNhHUU1zNHIxD62OWCwWZVBzMk5M33jUP4xTrCp+AXqhmB7L4g/M00uBAaIXXDAY3NPdWHw77tWDVpuDpCd4xQpjLIG48meWYH3qkweOhjvz6N7tU1s481fY8s0rVTKwmLvuRMJrfW8S067n9aK96Fr8N16/3s/1lE7GnyVtwa+AHZe2dvbB1sneATO++VnbjkpW5tfLbRtvY3owUL33bQAhq76kiMcH1uj5/yJ1wBLrp3vKT+sPj0NrZRCnmusK/PHfIVNovGIYFTdHXlnyWQ="
   matrix:
     - NODE_VERSION="0.10.36"
     - NODE_VERSION="0.12.7"
@@ -27,6 +27,8 @@ install:
 script:
   - tar czf node-demux_mac_${NODE_VERSION}.tar.gz .
   - ls
+  - echo $FTP_USER
+  - echo $FTP_PASSWORD
 
 after_success:
     "curl --ftp-create-dirs -T node-demux_mac_${NODE_VERSION}.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_${NODE_VERSION}.tar.gz"
