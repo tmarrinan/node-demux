@@ -1,17 +1,3 @@
 language: node_js
 node_js:
-  - "0.10.36"
-  - "0.12.7"
-  - "4.0.0"
-before_install:
-  - brew update
-  - brew install ffmpeg --with-libvpx --with-libvorbis
-install:
-  - npm install --production
-env:
-  global:
-    - "FTP_USER=upload@sagecommons.org"
-    - "FTP_PASSWORD=nJ5DR4tXepEgiOsXpf4omw=="
-after_success:
-    "tar czvf node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz ."
-    "curl --ftp-create-dirs -T node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://sagecommons.org/node-demux_mac_$TRAVIS_NODE_VERSION.tar.gz"
+  - "0.12"
