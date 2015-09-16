@@ -51,11 +51,12 @@ after_build:
 - mkdir C:\Build\
 - 7z a -ttar C:\Build\node-demux_win_%nodejs_version%.tar C:\projects\node-demux\
 - 7z a -tgzip C:\Build\node-demux_win_%nodejs_version%.tar.gz C:\Build\node-demux_win_%nodejs_version%.tar
+- move C:\Build\node-demux_win_%nodejs_version%.tar.gz C:\projects\node-demux
 
 test: off
 
 artifacts:
-- path: C:\Build\node-demux_win_$(nodejs_version).tar.gz
+- path: node-demux_win_$(nodejs_version).tar.gz
   name: node-demux-win64
 
 deploy:
