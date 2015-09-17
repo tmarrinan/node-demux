@@ -30,9 +30,11 @@
 			['OS=="mac"',
 				{
 					'include_dirs' : [
-						"<!(node -e \"require('nan')\")"
+						"<!(node -e \"require('nan')\")",
+						"/usr/local/include"
 					],
 					'libraries': [
+						"-L/usr/local/lib",
 						"-lavcodec",
 						"-lavformat",
 						"-lavutil"
