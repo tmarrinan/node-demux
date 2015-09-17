@@ -29,7 +29,7 @@ install:
 script:
   - mkdir /Users/travis/build/tmarrinan/Build
   - cd ..
-  - tar czf /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz .
+  - tar czf /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz node-demux
   - cd node-demux
   - mv /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz .
   - node bitbucket_upload.js tmarrinan $BITBUCKET_PASSWORD tmarrinan/binary-modules node-demux_mac_${NODE_VERSION}.tar.gz
