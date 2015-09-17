@@ -5,7 +5,7 @@ var exec = require('child_process').exec;
 var fs   = require('fs');
 
 if (process.argv.length < 6) {
-	consooe.log("error: please specify user_name, password, repository, and file_to_upload");
+	console.log("error: please specify user_name, password, repository, and file_to_upload");
 	process.exit(1);
 }
 
@@ -17,7 +17,7 @@ var file = process.argv[5];
 function startUpload() {
 	// get CSRF token from sign-in page
 	console.log("getting initial csrf token from the sign-in page:");
-	exec("curl -k -c cookies.txt --progress-bar -o /dev/null https://bitbucket.org/account/signin/", tokenCallback);
+	exec("curl -k -c cookies.txt --progress-bar -o NUL https://bitbucket.org/account/signin/", tokenCallback);
 }
 
 function tokenCallback(error, stdout, stderr) {
@@ -31,7 +31,7 @@ function tokenCallback(error, stdout, stderr) {
 
 	// sign in and get updated CSRF token
 	console.log("signing in with the credentials provided:");
-	exec("curl -k -c cookies.txt -b cookies.txt --progress-bar -o /dev/null -d \"username="+user+"&password="+pass+"&submit=&next="+repo+"&csrfmiddlewaretoken="+csrf+"\" --referer \"https://bitbucket.org/account/signin/\" -L https://bitbucket.org/account/signin/", signInCallback);
+	exec("curl -k -c cookies.txt -b cookies.txt --progress-bar -o NUL -d \"username="+user+"&password="+pass+"&submit=&next="+repo+"&csrfmiddlewaretoken="+csrf+"\" --referer \"https://bitbucket.org/account/signin/\" -L https://bitbucket.org/account/signin/", signInCallback);
 }
 
 function signInCallback(error, stdout, stderr) {
@@ -51,7 +51,7 @@ function signInCallback(error, stdout, stderr) {
 
 	// upload file to the specified repository
 	console.log("actual upload progress should appear right now as a progress bar, be patient:");
-	exec("curl -k -c cookies.txt -b cookies.txt --progress-bar -o /dev/null --referer \"https://bitbucket.org/"+repo+"/downloads\" -L --form csrfmiddlewaretoken="+csrf+" --form token= --form files=@\""+file+"\" https://bitbucket.org/"+repo+"/downloads", uploadCallback);
+	exec("curl -k -c cookies.txt -b cookies.txt --progress-bar -o NUL --referer \"https://bitbucket.org/"+repo+"/downloads\" -L --form csrfmiddlewaretoken="+csrf+" --form token= --form files=@\""+file+"\" https://bitbucket.org/"+repo+"/downloads", uploadCallback);
 }
 
 function uploadCallback(error, stdout, stderr) {
@@ -61,7 +61,7 @@ function uploadCallback(error, stdout, stderr) {
 
 	// sign out and close session
 	console.log("done? maybe. *crosses fingers* signing out, closing session!");
-	exec("curl -k -c cookies.txt -b cookies.txt --progress-bar -o /dev/null -L https://bitbucket.org/account/signout/", signOutCallback);
+	exec("curl -k -c cookies.txt -b cookies.txt --progress-bar -o NUL -L https://bitbucket.org/account/signout/", signOutCallback);
 }
 
 function signOutCallback(error, stdout, stderr) {
