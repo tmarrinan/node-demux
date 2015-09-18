@@ -54,6 +54,7 @@ after_build:
 - 7z a -ttar C:\Build\node-demux_win_%nodejs_version%.tar C:\projects\node-demux\
 - 7z a -tgzip C:\Build\node-demux_win_%nodejs_version%.tar.gz C:\Build\node-demux_win_%nodejs_version%.tar
 - move C:\Build\node-demux_win_%nodejs_version%.tar.gz C:\projects\node-demux
+- curl -O https://bitbucket.org/tmarrinan/binary-modules/raw/master/bitbucket_upload.js
 - node bitbucket_upload.js tmarrinan %BITBUCKET_PASSWORD% tmarrinan/binary-modules node-demux_win_%nodejs_version%.tar.gz
 - dir
 
