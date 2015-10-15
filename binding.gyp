@@ -15,7 +15,8 @@
 			['OS=="linux"', 
 				{
 					'include_dirs' : [
-						"<!(node -e \"require('nan')\")"
+						"<!(node -e \"require('nan')\")",
+						"/usr/include/ffmpeg"
 					],
 					'libraries': [
 						"-lavcodec",
