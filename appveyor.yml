@@ -30,8 +30,8 @@ environment:
   matrix:
   - nodejs_version: 0.10.40
   - nodejs_version: 0.12.7
-  - nodejs_version: 4.2.3
-  - nodejs_version: 5.1.1
+  - nodejs_version: 4.0.0
+  - nodejs_version: 5.1.0
 
 install:
 - ps: >-
@@ -53,7 +53,7 @@ after_build:
 - move ffmpeg-2.8.3-win64-shared\bin\* build\Release
 - rmdir /Q /S ffmpeg-2.8.3-win64-shared
 - del /Q *.7z
-- rmdir /Q /S .git
+#- rmdir /Q /S .git
 - mkdir C:\Build\
 - 7z a -ttar C:\Build\node-demux_win_%nodejs_version%.tar C:\projects\node-demux\
 - 7z a -tgzip C:\Build\node-demux_win_%nodejs_version%.tar.gz C:\Build\node-demux_win_%nodejs_version%.tar
