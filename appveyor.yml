@@ -10,7 +10,7 @@ clone_depth: 5
 
 init:
 - curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-2.8.3-win64-dev.7z
-- 7z x ffmpeg-2.8-win64-dev.7z -o.
+- 7z x ffmpeg-2.8.3-win64-dev.7z -o.
 - mkdir C:\Dev\
 - mkdir C:\Dev\ffmpeg-win64-dev
 - move ffmpeg-2.8.3-win64-dev\lib C:\Dev\ffmpeg-win64-dev
