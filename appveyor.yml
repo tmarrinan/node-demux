@@ -6,7 +6,10 @@ branches:
 
 configuration: Release
 platform: x64
-clone_depth: 5
+#clone_depth: 5
+# specific to github and bitbucket: get a ZIP file using REST API
+shallow_clone: true
+
 
 init:
 - curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-2.8.3-win64-dev.7z
@@ -25,10 +28,10 @@ environment:
   BITBUCKET_PASSWORD:
     secure: ah/zb5h/z49InzWbvkFOrw==
   matrix:
-  - nodejs_version: 0.10.36
+  - nodejs_version: 0.10.40
   - nodejs_version: 0.12.7
-  - nodejs_version: 4.0.0
-  - nodejs_version: 5.1.0
+  - nodejs_version: 4.2.3
+  - nodejs_version: 5.1.1
 
 install:
 - ps: >-
