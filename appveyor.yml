@@ -9,14 +9,14 @@ platform: x64
 clone_depth: 5
 
 init:
-- curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-20150916-git-cbbd906-win64-dev.7z
-- 7z x ffmpeg-20150916-git-cbbd906-win64-dev.7z -o.
+- curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-2.8.3-win64-dev.7z
+- 7z x ffmpeg-2.8-win64-dev.7z -o.
 - mkdir C:\Dev\
 - mkdir C:\Dev\ffmpeg-win64-dev
-- move ffmpeg-20150916-git-cbbd906-win64-dev\lib C:\Dev\ffmpeg-win64-dev
-- move ffmpeg-20150916-git-cbbd906-win64-dev\include C:\Dev\ffmpeg-win64-dev
+- move ffmpeg-2.8.3-win64-dev\lib C:\Dev\ffmpeg-win64-dev
+- move ffmpeg-2.8.3-win64-dev\include C:\Dev\ffmpeg-win64-dev
 - del /Q *.7z
-- rmdir /Q /S ffmpeg-20150916-git-cbbd906-win64-dev
+- rmdir /Q /S ffmpeg-2.8.3-win64-dev
 - dir C:\Dev
 - dir C:\Dev\ffmpeg-win64-dev\include
 - dir C:\Dev\ffmpeg-win64-dev\lib
@@ -28,6 +28,7 @@ environment:
   - nodejs_version: 0.10.36
   - nodejs_version: 0.12.7
   - nodejs_version: 4.0.0
+  - nodejs_version: 5.1.0
 
 install:
 - ps: >-
@@ -44,10 +45,10 @@ build:
   verbosity: minimal
 
 after_build:
-- curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/shared/ffmpeg-20150916-git-cbbd906-win64-shared.7z
-- 7z x ffmpeg-20150916-git-cbbd906-win64-shared.7z -o.
-- move ffmpeg-20150916-git-cbbd906-win64-shared\bin\* build\Release
-- rmdir /Q /S ffmpeg-20150916-git-cbbd906-win64-shared
+- curl -LsSO http://ffmpeg.zeranoe.com/builds/win64/shared/ffmpeg-2.8.3-win64-shared.7z
+- 7z x ffmpeg-2.8.3-win64-shared.7z -o.
+- move ffmpeg-2.8.3-win64-shared\bin\* build\Release
+- rmdir /Q /S ffmpeg-2.8.3-win64-shared
 - del /Q *.7z
 - rmdir /Q /S .git
 - mkdir C:\Build\
