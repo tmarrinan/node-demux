@@ -3,7 +3,7 @@ os: osx
 language: objective-c
 
 git:
-  depth: 5
+  depth: 1
 
 env:
   global:
@@ -30,7 +30,7 @@ install:
 script:
   - mkdir /Users/travis/build/tmarrinan/Build
   - cd ..
-  - tar czf /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz node-demux
+  - tar --exclude ./node-demux/.git/ -czf /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz node-demux
   - cd node-demux
   - mv /Users/travis/build/tmarrinan/Build/node-demux_mac_${NODE_VERSION}.tar.gz .
   - curl -O https://bitbucket.org/tmarrinan/binary-modules/raw/master/bitbucket_upload.js
