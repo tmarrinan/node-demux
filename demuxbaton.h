@@ -14,7 +14,7 @@ extern "C" {
 using namespace v8;
 
 enum DemuxState  { DS_IDLE, DS_LOAD, DS_DEMUX, DS_SEEK };
-enum DemuxAction { DA_NONE, DA_LOAD, DA_PLAY, DA_PAUSE, DA_SEEK, DA_END };
+enum DemuxAction { DA_NONE, DA_LOAD, DA_PLAY, DA_NEXT_FRAME, DA_PAUSE, DA_SEEK, DA_END };
 
 class DemuxBaton {
 	public:

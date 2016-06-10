@@ -19,7 +19,6 @@ void DemuxWorker::HandleOKCallback() {
 				break;
 			case DA_LOAD:
 				break;
-
 			case DA_PLAY:
 				if(continuous) {
           baton->state = DS_DEMUX;
@@ -37,6 +36,10 @@ void DemuxWorker::HandleOKCallback() {
 					baton->action = DA_NONE;
           baton->m_Frame(baton->frame_buffer);
 				}
+				break;
+			case DA_NEXT_FRAME:
+				baton->m_Frame(baton->frame_buffer);
+				baton->action = DA_NONE;
 				break;
 			case DA_PAUSE:
 				baton->action = DA_NONE;

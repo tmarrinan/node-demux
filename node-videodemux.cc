@@ -24,6 +24,7 @@ NAN_MODULE_INIT(VideoDemux::Init) {
 	// Prototype
 	Nan::SetPrototypeMethod(tpl, "LoadVideo",     LoadVideo);
 	Nan::SetPrototypeMethod(tpl, "StartDemuxing", StartDemuxing);
+	Nan::SetPrototypeMethod(tpl, "DemuxFrame",    DemuxFrame);
 	Nan::SetPrototypeMethod(tpl, "PauseDemuxing", PauseDemuxing);
 	Nan::SetPrototypeMethod(tpl, "StopDemuxing",  StopDemuxing);
 	Nan::SetPrototypeMethod(tpl, "SeekVideo",     SeekVideo);
@@ -92,6 +93,24 @@ NAN_METHOD(VideoDemux::StartDemuxing) {
 	
 	info.GetReturnValue().Set(Nan::Undefined());
 }
+
+
+NAN_METHOD(VideoDemux::DemuxFrame) {
+	Nan::HandleScope();
+	
+	VideoDemux *obj = ObjectWrap::Unwrap<VideoDemux>(info.This());
+	obj->baton->action = DA_NEXT_FRAME;
+	if(obj->baton->state == DS_IDLE) {
+        obj->baton->state = DS_DEMUX;
+		obj->baton->demux_start = uv_now(uv_default_loop());
+		obj->baton->video_start = obj->baton->current_frame * obj->baton->frame_time * 1000.0;
+		obj->baton->m_Start();
+		Nan::AsyncQueueWorker(new DemuxWorker(obj->baton, true));
+	}
+	
+	info.GetReturnValue().Set(Nan::Undefined());
+}
+
 
 NAN_METHOD(VideoDemux::PauseDemuxing) {
 	Nan::HandleScope();

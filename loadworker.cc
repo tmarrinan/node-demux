@@ -29,6 +29,12 @@ void LoadWorker::HandleOKCallback() {
 				baton->m_Start();
 				Nan::AsyncQueueWorker(new DemuxWorker(baton, true));
 				break;
+			case DA_NEXT_FRAME:
+				baton->demux_start = uv_now(uv_default_loop());
+				baton->video_start = baton->current_frame * baton->frame_time * 1000.0;
+				baton->m_Start();
+				Nan::AsyncQueueWorker(new DemuxWorker(baton, false));
+				break;
 			case DA_PAUSE:
 				baton->action = DA_NONE;
 				baton->m_Pause();

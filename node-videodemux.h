@@ -28,6 +28,7 @@ class VideoDemux : public node::ObjectWrap {
 		static NAN_METHOD(New);
 		static NAN_METHOD(LoadVideo);
 		static NAN_METHOD(StartDemuxing);
+		static NAN_METHOD(DemuxFrame);
 		static NAN_METHOD(PauseDemuxing);
 		static NAN_METHOD(StopDemuxing);
 		static NAN_METHOD(SeekVideo);
