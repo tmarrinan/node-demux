@@ -85,14 +85,19 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 			int output_height = height;
 			struct SwsContext *img_convert_ctx = sws_getContext(width, height, 
 				src_pix_fmt, output_width, output_height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL); 
-
+			
 			if (img_convert_ctx == NULL) { 
 				printf("Error: img_convert_ctx from sws_getContext was null! Cannot demux frame.");
 			} else {
-				
+				uint8_t * outData[1] = { (uint8_t *) output_buffer }; // RGB24 have one plane
+				int outLinesize[1] = { 3 * output_width }; // RGB stride
+				sws_scale(img_convert_ctx, frame->data, frame->linesize, 0, output_height, outData, outLinesize);
+
 				Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::CopyBuffer((const char *)output_buffer, output_bufferSize).ToLocalChecked() };
 				OnFrame->Call(2, argv);
 			}
+			sws_freeContext(img_convert_ctx);
+			free(output_buffer);
 
 		} else {
 			Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::CopyBuffer(buf, size).ToLocalChecked() };	
