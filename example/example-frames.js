@@ -24,7 +24,7 @@ video.on('frame', function(frameIdx, data) {
     video.frame();
 });
 
-video.load(path.join(__dirname, "big-buck-bunny_trailer.mp4"));
+video.load(path.join(__dirname, "big-buck-bunny_trailer.mp4"), {'convertToRgb': true});
 video.frame();
 
 

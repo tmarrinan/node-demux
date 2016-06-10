@@ -44,6 +44,7 @@ declare new demuxer: `var video = new demux();`
 | Option                            | Meaning |
 |-----------------------------------|---------|
 | `decodeFirstFrame`                | boolean flag: decodes one frame after load, seek, or stop |
+| `convertToRgb`                         | boolean flag: converts yuv frames into rgb888             |
 
 
 ### Example ###

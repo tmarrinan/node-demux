@@ -78,8 +78,26 @@ void DemuxBaton::m_Frame(VideoFrame *frm) {
 		uint32_t size = frm->getBufferSize();
 		const char *buf = reinterpret_cast<const char*>(frm->getBuffer());
 		int64_t frameIdx = frm->getFrameIndex();
-		Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::CopyBuffer(buf, size).ToLocalChecked() };
-		OnFrame->Call(2, argv);
+		if(convert_to_rgb){
+			int output_bufferSize = avpicture_get_size(AV_PIX_FMT_RGB24, width, height); 
+			uint8_t *  output_buffer = (uint8_t *)av_malloc(output_bufferSize); 
+			int output_width = width;
+			int output_height = height;
+			struct SwsContext *img_convert_ctx = sws_getContext(width, height, 
+				src_pix_fmt, output_width, output_height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL); 
+
+			if (img_convert_ctx == NULL) { 
+				printf("Error: img_convert_ctx from sws_getContext was null! Cannot demux frame.");
+			} else {
+				
+				Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::CopyBuffer((const char *)output_buffer, output_bufferSize).ToLocalChecked() };
+				OnFrame->Call(2, argv);
+			}
+
+		} else {
+			Local<Value> argv[2] = { Nan::New<Number>(frameIdx), Nan::CopyBuffer(buf, size).ToLocalChecked() };	
+			OnFrame->Call(2, argv);
+		}
 	}
 }
 
@@ -125,6 +143,8 @@ void DemuxBaton::OpenVideoFile() {
 	if(display_aspect_ratio <= 0) display_aspect_ratio = (double)width / (double)height;
 	if(num_frames <= 0) num_frames = (int64_t)floor((duration * frame_rate) + 0.5);
 	
+	src_pix_fmt = video_dec_ctx->pix_fmt;
+
 	if      (video_dec_ctx->pix_fmt == AV_PIX_FMT_YUV420P) format = "yuv420p";
 	else if (video_dec_ctx->pix_fmt == AV_PIX_FMT_RGB24)   format = "rgb24";
 	else if (video_dec_ctx->pix_fmt == AV_PIX_FMT_RGB32)   format = "rgb32";

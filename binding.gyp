@@ -21,7 +21,9 @@
 					'libraries': [
 						"-lavcodec",
 						"-lavformat",
-						"-lavutil"
+						"-lavutil",
+						"-lswscale"
+
 					],
 					'cflags': [
 						"-D__STDC_CONSTANT_MACROS"
@@ -38,7 +40,8 @@
 						"-L/usr/local/lib",
 						"-lavcodec",
 						"-lavformat",
-						"-lavutil"
+						"-lavutil",
+						"-lswscale"
 					]
 				},
 			],
@@ -51,7 +54,8 @@
                     'libraries': [
 						"C:/Dev/ffmpeg-win64-dev/lib/avcodec.lib",
 						"C:/Dev/ffmpeg-win64-dev/lib/avformat.lib",
-						"C:/Dev/ffmpeg-win64-dev/lib/avutil.lib"
+						"C:/Dev/ffmpeg-win64-dev/lib/avutil.lib",
+						"C:/Dev/ffmpeg-win64-dev/lib/swscale.lib"
 					]
 				},
 			]

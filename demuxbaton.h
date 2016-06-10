@@ -5,6 +5,9 @@ extern "C" {
 	#include <libavcodec/avcodec.h>
 	#include <libavformat/avformat.h>
 	#include <libavutil/imgutils.h>
+	#include <libavutil/pixfmt.h>
+	#include <libswscale/swscale.h>
+	#include <libavcodec/avcodec.h>
 }
 #include <string>
 #include <node.h>
@@ -64,6 +67,11 @@ class DemuxBaton {
 		
 		// flag for whether or not to decode one frame after load / seek
 		bool decode_first_frame;
+
+		// flag for whether or not to convert yuv420p to rgb888
+		bool convert_to_rgb;
+		
+		AVPixelFormat src_pix_fmt;
 		
 		// error message from thread
 		std::string error;
