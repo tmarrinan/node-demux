@@ -36,7 +36,7 @@ declare new demuxer: `var video = new demux();`
 | `video.pause(callback)`           | pauses demuxing (`callback` is called once video successfully pauses decoding |
 | `video.stop(callback)`            | stops demuxing (same as pause, but also seeks video back to start) |
 | `video.seek(timestamp, callback)` | seeks video to desired time in seconds (`callback` is called once video successfully finished seek) |
-| `video.frame()`                   | decodes one frame as soon as possible (`'frame'` message will be called) |
+| `video.nextFrame()`               | decodes next frame as soon as possible (`'frame'` message will be called) |
 | `video.on(message)`               | `message` is one of `'error'`, `'metadata'`, `'start'`, `'end'`, or `'frame'` |
 
 
@@ -44,7 +44,7 @@ declare new demuxer: `var video = new demux();`
 | Option                            | Meaning |
 |-----------------------------------|---------|
 | `decodeFirstFrame`                | boolean flag: decodes one frame after load, seek, or stop |
-| `convertToRgb`                         | boolean flag: converts yuv frames into rgb888             |
+| `colorspace`                      | string: desired frame colorspace (`'yuv420p'` or `'rgb24'`) |
 
 
 ### Example ###

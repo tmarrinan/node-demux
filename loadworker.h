@@ -10,8 +10,8 @@
 
 class LoadWorker : public Nan::AsyncWorker {
 	public:
-		LoadWorker(DemuxBaton *btn, std::string fn, bool dff, bool convertToRgb)
-			: Nan::AsyncWorker(NULL), baton(btn), filename(fn), decodeFirstFrame(dff), convertToRgb(convertToRgb) {};
+		LoadWorker(DemuxBaton *btn, std::string fn, bool dff, std::string colorspace)
+			: Nan::AsyncWorker(NULL), baton(btn), filename(fn), decodeFirstFrame(dff), colorspace(colorspace) {};
 		~LoadWorker() {};
 		
 		void Execute();
@@ -21,7 +21,7 @@ class LoadWorker : public Nan::AsyncWorker {
 		DemuxBaton *baton;
 		std::string filename;
 		bool decodeFirstFrame;
-		bool convertToRgb;
+		std::string colorspace;
 };
 
 #endif // LOADWORKER_H

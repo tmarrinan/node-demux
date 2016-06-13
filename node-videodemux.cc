@@ -61,14 +61,14 @@ NAN_METHOD(VideoDemux::LoadVideo) {
 	}
 	
 	bool dff = false;
-	bool convertToRgb = false;
+	std::string colorspace = "default";
 	if (info.Length() >= 2) {
 		Local<Object> obj = info[1]->ToObject();
 		if (obj->Has(Nan::New<String>("decodeFirstFrame").ToLocalChecked())) {
 			dff = obj->Get(Nan::New<String>("decodeFirstFrame").ToLocalChecked())->BooleanValue();
 		}
-		if (obj->Has(Nan::New<String>("convertToRgb").ToLocalChecked())) {
-			convertToRgb = obj->Get(Nan::New<String>("convertToRgb").ToLocalChecked())->BooleanValue();
+		if (obj->Has(Nan::New<String>("colorspace").ToLocalChecked())) {
+			colorspace = *Nan::Utf8String(obj->Get(Nan::New<String>("colorspace").ToLocalChecked()));
 		}
 	}
 	
@@ -76,7 +76,7 @@ NAN_METHOD(VideoDemux::LoadVideo) {
 	obj->baton->action = DA_LOAD;
 	if(obj->baton->state == DS_IDLE) {
         obj->baton->state = DS_LOAD;
-		Nan::AsyncQueueWorker(new LoadWorker(obj->baton, *Nan::Utf8String(info[0]), dff, convertToRgb));
+		Nan::AsyncQueueWorker(new LoadWorker(obj->baton, *Nan::Utf8String(info[0]), dff, colorspace));
 	}
 	
 	info.GetReturnValue().Set(Nan::Undefined());

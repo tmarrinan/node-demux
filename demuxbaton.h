@@ -68,10 +68,15 @@ class DemuxBaton {
 		// flag for whether or not to decode one frame after load / seek
 		bool decode_first_frame;
 
-		// flag for whether or not to convert yuv420p to rgb888
-		bool convert_to_rgb;
+		// desired colorspace for frames: 'yuv420p' or 'rgb888' (or 'default' -> do not convert)
+		std::string colorspace;
 		
+		// actual colorspace of frames
 		AVPixelFormat src_pix_fmt;
+
+		// scale context and output image buffer (if colorspace conversion is needed)
+		struct SwsContext *img_convert_ctx;
+		uint8_t *output_buffer;
 		
 		// error message from thread
 		std::string error;

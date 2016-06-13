@@ -20,7 +20,7 @@ function demux() {
 		this.video.StartDemuxing();
 	};
 
-	this.frame = function() {
+	this.nextFrame = function() {
 		this.video.DemuxFrame();
 	};
 	

@@ -4,7 +4,7 @@ void LoadWorker::Execute() {
 	baton->state = DS_LOAD;
 	baton->filename = filename;
 	baton->decode_first_frame = decodeFirstFrame;
-	baton->convert_to_rgb = convertToRgb;
+	baton->colorspace = colorspace;
 	baton->OpenVideoFile();
 }
 
